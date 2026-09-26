@@ -35,7 +35,7 @@ Bottle and can collection (flaskeinnsamling) is a fundraiser. Musicians collect 
 
 ## Repo conventions
 - No generator scripts. Artifacts are produced by the agent in chat.
-- Store each season in `data/<YYYY-YY>.json` (e.g. `data/2026-27.json`): collection dates, `contacts` (name, phone), `vipps`, musicians (name, group, birthYear, address, homeRode), `assignments` (`{"2001": ["Name", ...]}`) and `reception` (`{"<date>": {"17:00-18:30": ["Name", ...], ...}}`). Read the previous season file to preserve continuity.
+- Store each season in `data/<YYYY-YY>.json` (e.g. `data/2026-27.json`): collection dates, `contacts` (name, phone), `vipps`, `housing` (`{"2001": [addresses, dwellings]}` from Geonorge; dwellings = notices), musicians (name, group, birthYear, address, homeRode), `assignments` (`{"2001": ["Name", ...]}`) and `reception` (`{"<date>": {"17:00-18:30": ["Name", ...], ...}}`). Read the previous season file to preserve continuity.
 - 2026-27 collection dates: 2026-10-21, 2027-01-06, 2027-05-19. Contact: Leif Bjarte Johansson, 92423946. Vipps: #87153. For later seasons, read these values from the season file.
 - Full names of musicians are OK in the repo and on the published map.
 - Bokmål for all user-facing text. English for code and identifiers.

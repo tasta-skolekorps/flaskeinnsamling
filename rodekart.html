@@ -94,10 +94,14 @@ function renderArk(){
     html+='<section class="page badges">'+people.slice(i,i+8).map(([n,r])=>`<div class="badge"><div class="org">Tasta Skolekorps</div><div class="t">Flaskeinnsamling</div><div class="n">${n}</div><div class="r">Rode ${r}</div><div class="c">Kontakt: ${contactText}</div><div class="ret">Leveres tilbake i mottaket på Byfjord skole</div></div>`).join('')+'</section>';
   }
   document.getElementById('ark').innerHTML=html;
-  let loaded=0;
-  for(const r of assigned){
+  // Maps load one at a time with tile retries; the tile server resets connections under load.
+  const next=i=>{
+    if(i===assigned.length){window.arkReady=true;return;}
+    const r=assigned[i];
     const m=L.map('m'+r,{zoomControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:false,zoomSnap:0.25});
-    L.tileLayer(tileUrl,{maxZoom:19,attribution}).on('load',()=>{if(++loaded===assigned.length)window.arkReady=true;}).addTo(m);
+    L.tileLayer(tileUrl,{maxZoom:19,attribution})
+      .on('tileerror',e=>{const t=e.tile,n=(t.retries||0)+1;if(n<=5){t.retries=n;setTimeout(()=>t.src=e.target.getTileUrl(e.coords)+'?r='+n,500*n);}})
+      .once('load',()=>next(i+1)).addTo(m);
     const ring=polys[r];
     m.fitBounds(ring,{padding:[20,20],maxZoom:18});
     const view=m.getBounds().pad(0.1);
@@ -107,7 +111,8 @@ function renderArk(){
         .bindTooltip(o,{permanent:true,direction:'center',className:'nlbl'});
     }
     L.polygon(ring,{color:'#c00',weight:4,fillColor:'#c00',fillOpacity:0.08,interactive:false}).addTo(m);
-  }
+  };
+  next(0);
 }
 
 function renderMap(){
