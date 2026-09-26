@@ -1,20 +1,30 @@
 <!DOCTYPE html>
 <html lang="no"><head><meta charset="utf-8"><title>Vaktliste mottak – flaskeinnsamling Tasta Skolekorps</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="theme.css">
 <style>
-body{font-family:system-ui,Arial,sans-serif;max-width:900px;margin:0 auto;padding:16px;color:#222}
+main{max-width:900px}
 h1{font-size:24px;margin:0 0 4px}
-h2{font-size:18px;margin:24px 0 8px;border-bottom:2px solid #c00;padding-bottom:4px}
+h2{font-size:18px;margin:24px 0 8px;padding-bottom:4px}
 p{margin:4px 0}
 .slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.slot{border:1px solid #ccc;border-radius:6px;padding:8px 12px}
-.slot h3{margin:0 0 6px;font-size:16px}
+.slot{border:1px solid #cfe3d6;border-top:4px solid var(--glass);border-radius:6px;padding:8px 12px;background:#fbfdfb}
+.slot h3{margin:0 0 6px;font-size:16px;color:var(--glass-dark)}
 .slot ol{margin:0;padding-left:20px}
 .muted{color:#666}
-a{color:#0645ad}
 @page{size:A4;margin:12mm}
-@media print{a{display:none}}
-</style></head><body>
+@media print{main a{display:none}}
+</style></head><body class="has-side">
+<button class="side-toggle" aria-label="Meny" onclick="document.body.classList.toggle('side-open')">&#9776;</button>
+<nav class="side">
+ <a class="brand" href="index.html"><svg width="24" height="48" viewBox="0 0 24 48" aria-hidden="true"><path d="M9 1h6v5l-1 1v7c0 2 6 5 6 11v19a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V25c0-6 6-9 6-11V7L9 6z" fill="#bfe8cf"/><rect x="6" y="27" width="12" height="10" rx="1.5" fill="#d08a2a"/></svg><span><b>Flaskeinnsamling</b><small>Tasta Skolekorps</small></span></a>
+ <a href="index.html">Slik foregår det</a>
+ <a href="rodekart.html">Rodekart</a>
+ <a href="rodeark-2026-27.pdf">Rodeark (PDF)</a>
+ <a href="vaktliste.html" aria-current="page">Vaktliste mottak</a>
+ <div class="side-foot">Sesong 2026-27<br>Leif Bjarte Johansson<br><a href="tel:+4792423946">924 23 946</a> · Vipps #87153</div>
+</nav>
+<main>
 <h1>Vaktliste mottak – flaskeinnsamling 2026-27</h1>
 <p>Tasta Skolekorps · mottak på <b>Byfjord skole</b> · onsdag kl. 17–21</p>
 <p>Seniorkorpset tar imot flasker og bokser, sorterer i Infinitum-sekker og tar imot badgene fra rodene. Vaktene er satt opp etter øvingstidene i Spond.</p>
@@ -41,4 +51,5 @@ a{color:#0645ad}
 <h2>Kontakt</h2>
 <p>Leif Bjarte Johansson, tlf. 924 23 946 · Vipps #87153</p>
 <p><a href="index.html">Slik foregår innsamlingen</a> · <a href="rodekart.html">Rodekart</a></p>
+</main>
 </body></html>

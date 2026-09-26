@@ -2,22 +2,26 @@
 <html lang="no"><head><meta charset="utf-8"><title>Rodekart – flaskeinnsamling Tasta Skolekorps</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="theme.css">
 <style>
 html,body{height:100%;margin:0;font-family:system-ui,Arial,sans-serif}
-#map{position:absolute;inset:0}
+#map{position:absolute;inset:0;left:var(--side-w)}
+@media (max-width:800px){#map{left:0}.leaflet-top.leaflet-left{top:52px}}
+@media print{#map{left:0}}
+body.ark .side,body.ark .side-toggle{display:none}
 .lbl{background:rgba(255,255,255,.9);border:1px solid #444;border-radius:4px;padding:2px 5px;font-size:12px;line-height:1.25;white-space:nowrap;text-align:center;box-shadow:0 1px 2px rgba(0,0,0,.35)}
 .lbl b{display:block;font-size:13px}
 .lbl small{display:block;color:#555;font-size:11px}
 .lbl.free{background:rgba(235,235,235,.9);color:#444;border:1px dashed #666;font-size:11px}
 .panel{position:absolute;top:10px;right:10px;z-index:1000;background:#fff;padding:8px 12px;border-radius:6px;box-shadow:0 1px 4px rgba(0,0,0,.3);max-width:260px}
-.panel h1{font-size:15px;margin:0 0 4px}
+.panel h1{font-size:15px;margin:0 0 4px;color:var(--glass-dark)}
 .panel p{margin:2px 0;font-size:12px;color:#444}
 .panel label{font-size:12px;display:block;margin-top:6px}
 .panel input[type=search]{width:100%;box-sizing:border-box;margin-top:6px;padding:5px 7px;font-size:14px;border:1px solid #999;border-radius:4px}
 #hit{font-weight:600;color:#000}
 .leaflet-tooltip{pointer-events:none}
 .panel .info{margin-top:6px;padding-top:6px;border-top:1px solid #ddd}
-.panel a{color:#0645ad}
+.panel a{color:var(--glass)}
 @page{size:A4;margin:10mm}
 @media print{.leaflet-control-zoom,.leaflet-control-attribution,.panel label,.panel input,#hit{display:none}}
 body.ark,html:has(body.ark){height:auto}
@@ -30,7 +34,7 @@ body.ark #map,body.ark .panel{display:none}
 .overview table{border-collapse:collapse;font-size:9pt;flex:1;align-self:flex-start}
 .overview th,.overview td{border-bottom:1px solid #ccc;padding:1mm 1.5mm;text-align:left;vertical-align:top}
 .overview td:last-child,.overview th:last-child{text-align:right}
-.rode header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #c00;padding-bottom:2mm}
+.rode header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--glass);padding-bottom:2mm}
 .rode .big{font-size:30pt;font-weight:700;line-height:1}
 .rode .names{font-size:16pt;font-weight:600;text-align:right}
 .rode .facts{display:flex;justify-content:space-between;gap:4mm;margin:3mm 0;font-size:10pt}
@@ -42,6 +46,15 @@ body.ark #map,body.ark .panel{display:none}
 .nlbl{background:rgba(255,255,255,.75);border:none;box-shadow:none;color:#666;font-size:10px;padding:0 2px}
 @media print{body.ark{background:none}.page{margin:0;padding:0}}
 </style></head><body>
+<button class="side-toggle" aria-label="Meny" onclick="document.body.classList.toggle('side-open')">&#9776;</button>
+<nav class="side">
+ <a class="brand" href="index.html"><svg width="24" height="48" viewBox="0 0 24 48" aria-hidden="true"><path d="M9 1h6v5l-1 1v7c0 2 6 5 6 11v19a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V25c0-6 6-9 6-11V7L9 6z" fill="#bfe8cf"/><rect x="6" y="27" width="12" height="10" rx="1.5" fill="#d08a2a"/></svg><span><b>Flaskeinnsamling</b><small>Tasta Skolekorps</small></span></a>
+ <a href="index.html">Slik foregår det</a>
+ <a href="rodekart.html" aria-current="page">Rodekart</a>
+ <a href="rodeark-2026-27.pdf">Rodeark (PDF)</a>
+ <a href="vaktliste.html">Vaktliste mottak</a>
+ <div class="side-foot">Sesong 2026-27<br>Leif Bjarte Johansson<br><a href="tel:+4792423946">924 23 946</a> · Vipps #87153</div>
+</nav>
 <div id="map"></div>
 <div class="panel">
  <h1>Rodekart – flaskeinnsamling</h1>
@@ -107,7 +120,7 @@ function renderArk(){
       L.polygon(other,{color:'#666',weight:1,fill:false,dashArray:'4 4',interactive:false}).addTo(m)
         .bindTooltip(o,{permanent:true,direction:'center',className:'nlbl'});
     }
-    L.polygon(ring,{color:'#c00',weight:4,fillColor:'#c00',fillOpacity:0.08,interactive:false}).addTo(m);
+    L.polygon(ring,{color:'#1f7a4d',weight:4,fillColor:'#1f7a4d',fillOpacity:0.1,interactive:false}).addTo(m);
   };
   next(0);
 }

@@ -48,6 +48,7 @@ The user always logs in to every site themselves in the Playwright browser. Neve
 - Full names of musicians are OK in the repo and on the published map.
 - Bokmål for all user-facing text and commit messages. English for code and identifiers.
 - Published via GitHub Pages from this repo. The user expects **commit + push to `main`** after each completed change.
+- Web pages share [theme.css](../../theme.css) (bottle-green theme and side menu). Every page has the same `<nav class="side">` markup, with `aria-current="page"` on its own link. Keep the menu's season, PDF link and contact up to date.
 
 ## After every assignment or reception change
 1. Update the Flaskeinnsamling field in Styreportalen for every affected member, then re-read the grid to verify.
