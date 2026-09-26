@@ -44,7 +44,7 @@ Bottle and can collection (flaskeinnsamling) is a fundraiser. Musicians collect 
 ## Deliverables per season
 - [rodekart.html](../../rodekart.html): a self-contained Leaflet map with embedded `polys` and `byRode`, Kartverket `topograatone` tiles, assigned roder coloured, free roder grey and dashed. Show contact persons and Vipps info.
 - Printable PDF: one overview page with all roder and names, then **one A4 page per rode** with that rode's map, the responsible name(s) and the number of mailboxes/dwellings (= notices needed).
-- Each musician gets a package: the rode page, notices and a **badge**. They wear the badge while collecting and return it at the reception at Byfjord skole.
+- Each musician gets a package: the rode page, notices and a **badge**. Don't generate badges. They wear the badge while collecting and return it at the reception at Byfjord skole.
 - Reception duty list: reception seniors grouped by time slot for each collection date.
 - Process one-pager for families (HTML on GitHub Pages, Bokmål). It explains how collection day works: notices, time, rode, badge, drop-off at Byfjord skole, contact and Vipps.
 - Flag any collection date that is not a Wednesday.

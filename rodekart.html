@@ -37,13 +37,6 @@ body.ark #map,body.ark .panel{display:none}
 .rode .map{flex:1;border:1px solid #999}
 .rode footer{font-size:9pt;margin-top:2mm;color:#333}
 .nlbl{background:rgba(255,255,255,.75);border:none;box-shadow:none;color:#666;font-size:10px;padding:0 2px}
-.badges{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,1fr);gap:4mm}
-.badge{border:2px dashed #999;border-radius:3mm;padding:4mm;display:flex;flex-direction:column;justify-content:center;text-align:center}
-.badge .org{font-size:11pt;font-weight:600}
-.badge .t{font-size:9pt;color:#c00;text-transform:uppercase;letter-spacing:1px}
-.badge .n{font-size:16pt;font-weight:700;margin:2mm 0}
-.badge .r{font-size:13pt}
-.badge .c,.badge .ret{font-size:8pt;color:#333;margin-top:1mm}
 @media print{body.ark{background:none}.page{margin:0;padding:0}}
 </style></head><body>
 <div id="map"></div>
@@ -88,10 +81,6 @@ function renderArk(){
       <div class="facts"><div><div class="count">${dwellings[r]}</div>postkasser = lapper som trengs</div>${schedule}</div>
       <div class="map" id="m${r}"></div>
       <footer>Samle inn kl. 17–21 og lever flasker, bokser og badgen i mottaket på Byfjord skole. Kan du ikke? Finn en erstatter. Kontakt: ${contactText} · Vipps ${season.vipps}</footer></section>`;
-  }
-  const people=assigned.flatMap(r=>byRode[r].map(n=>[n,r]));
-  for(let i=0;i<people.length;i+=8){
-    html+='<section class="page badges">'+people.slice(i,i+8).map(([n,r])=>`<div class="badge"><div class="org">Tasta Skolekorps</div><div class="t">Flaskeinnsamling</div><div class="n">${n}</div><div class="r">Rode ${r}</div><div class="c">Kontakt: ${contactText}</div><div class="ret">Leveres tilbake i mottaket på Byfjord skole</div></div>`).join('')+'</section>';
   }
   document.getElementById('ark').innerHTML=html;
   // Maps load one at a time with tile retries; the tile server resets connections under load.
