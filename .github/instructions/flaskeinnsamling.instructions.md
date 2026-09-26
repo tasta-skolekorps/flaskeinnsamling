@@ -42,7 +42,7 @@ Bottle and can collection (flaskeinnsamling) is a fundraiser. Musicians collect 
 - Published via GitHub Pages from this repo.
 
 ## Deliverables per season
-- [rodekart.html](../../rodekart.html): a self-contained Leaflet map with embedded `polys` and `byRode`, Kartverket `topograatone` tiles, assigned roder coloured, free roder grey and dashed. Show contact persons and Vipps info.
+- [rodekart.html](../../rodekart.html): a self-contained Leaflet map with embedded `polys` and `byRode`, Kartverket `topograatone` tiles, assigned roder coloured, free roder grey and dashed. Only show free roder between the northern line 2114–2117 and the southern line 2002–2005 (`shownFree`). Every label shows its mailbox count. Show contact persons and Vipps info.
 - Printable PDF: one overview page with all roder and names, then **one A4 page per rode** with that rode's map, the responsible name(s) and the number of mailboxes/dwellings (= notices needed).
 - Each musician gets a package: the rode page, notices and a **badge**. Don't generate badges. They wear the badge while collecting and return it at the reception at Byfjord skole.
 - Reception duty list: reception seniors grouped by time slot for each collection date.
