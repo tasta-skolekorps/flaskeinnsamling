@@ -12,11 +12,13 @@ html,body{height:100%;margin:0;font-family:system-ui,Arial,sans-serif}
 .panel h1{font-size:15px;margin:0 0 4px}
 .panel p{margin:2px 0;font-size:12px;color:#444}
 .panel label{font-size:12px;display:block;margin-top:6px}
+.panel input[type=search]{width:100%;box-sizing:border-box;margin-top:6px;padding:5px 7px;font-size:14px;border:1px solid #999;border-radius:4px}
+#hit{font-weight:600;color:#000}
 .leaflet-tooltip{pointer-events:none}
 .panel .info{margin-top:6px;padding-top:6px;border-top:1px solid #ddd}
 .panel a{color:#0645ad}
 @page{size:A4;margin:10mm}
-@media print{.leaflet-control-zoom,.leaflet-control-attribution,.panel label{display:none}}
+@media print{.leaflet-control-zoom,.leaflet-control-attribution,.panel label,.panel input,#hit{display:none}}
 body.ark,html:has(body.ark){height:auto}
 body.ark{background:#888}
 body.ark #map,body.ark .panel{display:none}
@@ -44,6 +46,9 @@ body.ark #map,body.ark .panel{display:none}
  <h1>Rodekart – flaskeinnsamling</h1>
  <p>Tasta Skolekorps · 47 musikanter · 45 roder</p>
  <p>Grå stiplede roder er ledige. Zoom inn for å lese tette områder.</p>
+ <input type="search" id="search" list="names" placeholder="Søk etter navn …" autocomplete="off">
+ <datalist id="names"></datalist>
+ <p id="hit"></p>
  <label><input type="checkbox" id="free" checked> Vis ledige rodenummer</label>
  <div class="info" id="info"></div>
 </div>
@@ -113,11 +118,12 @@ const map=L.map('map',{preferCanvas:true});
 L.tileLayer(tileUrl,{maxZoom:19,attribution}).addTo(map);
 const colors=['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#bfef45','#fabed4','#469990','#dcbeff','#9A6324','#800000','#aaffc3','#808000','#ffd8b1','#000075','#a9a9a9'];
 const freeLayer=L.layerGroup().addTo(map);
-const bounds=[];let i=0;
+const bounds=[],layers={};let i=0;
 for(const [rode,ring] of Object.entries(polys)){
   const names=byRode[rode]; const has=!!names;
   const color=has?colors[i++%colors.length]:'#999';
   const poly=L.polygon(ring,{color,weight:has?2:1,fillColor:color,fillOpacity:has?0.28:0.03,dashArray:has?null:'4 4'}).addTo(map);
+  layers[rode]=poly;
   if(has) bounds.push(...ring);
   const c=poly.getBounds().getCenter();
   const tip=L.tooltip({permanent:true,direction:'center',className:'lbl'+(has?'':' free'),opacity:1}).setLatLng(c)
@@ -126,5 +132,23 @@ for(const [rode,ring] of Object.entries(polys)){
 }
 map.fitBounds(bounds,{padding:[30,30]});
 document.getElementById('free').addEventListener('change',e=>e.target.checked?freeLayer.addTo(map):map.removeLayer(freeLayer));
+const people=assigned.flatMap(r=>byRode[r].map(n=>[n,r])).sort((a,b)=>a[0].localeCompare(b[0],'nb'));
+document.getElementById('names').innerHTML=people.map(([n,r])=>`<option value="${n}">Rode ${r}</option>`).join('');
+const search=document.getElementById('search'),hit=document.getElementById('hit');
+let selected=null;
+const find=()=>{
+  const q=search.value.trim().toLowerCase();
+  if(selected){selected.setStyle({weight:2});selected=null;}
+  if(q.length<2){hit.textContent='';return;}
+  const matches=people.filter(([n])=>n.toLowerCase().includes(q));
+  const [n,r]=matches.find(([n])=>n.toLowerCase()===q)||matches[0]||[];
+  if(!r){hit.textContent='Ingen treff';return;}
+  hit.textContent=`${n}: rode ${r}`+(matches.length>1?` (${matches.length} treff)`:'');
+  selected=layers[r].setStyle({weight:6});
+  selected.bringToFront();
+  map.fitBounds(layers[r].getBounds(),{padding:[40,40],maxZoom:17});
+};
+search.addEventListener('change',find);
+search.addEventListener('keydown',e=>{if(e.key==='Enter')find();});
 }
 </script></body></html>
