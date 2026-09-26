@@ -32,7 +32,8 @@ Bottle and can collection (flaskeinnsamling) is a fundraiser. Musicians collect 
 
 ## Data sources
 The user always logs in to every site themselves in the Playwright browser. Never ask for, type, print or store credentials or tokens. Extract only the fields you need. **Never extract or store parents' names, e-mails or phone numbers.**
-- **Members:** Styreportalen at https://drift.styreportalen.no/medlemmer. The list is in an **iframe** as a virtualized `role=grid` ("Antall rader: N"), so scroll the grid and collect rows by `Medlemsnummer`. Fields: Fornavn, Etternavn, Fødselsdato, Adresse, Postnummer, Avdeling (Mellomkorps/Senior) and Flaskeinnsamling (e.g. `Rode 2016` or `Vakt 18:30-20:00`).
+- **Members:** Styreportalen at https://drift.styreportalen.no/medlemmer. The list is a virtualized MUI `role=grid` ("Antall rader: N"), so scroll `.MuiDataGrid-virtualScroller` and collect rows by `Medlemsnummer` (`data-field=person_id`). Fields: Fornavn, Etternavn, Fødselsdato, Adresse, Postnummer, Avdeling (`department`: Mellomkorps/Senior) and Flaskeinnsamling (`custom_fields.sone_for_flaskeinnsamling`). Each member's page is `/person/<row data-id>`.
+- **Styreportalen is the master** for who collects which rode and who has which reception slot. The Flaskeinnsamling field holds `Rode <nr>` (several roder: `Rode 2013, 2014`) or `Vakt <slot>` (e.g. `Vakt 18:30-20:00`). Leave it empty for members who don't take part. Always write changes to Styreportalen, and the repo files mirror it. If the repo and Styreportalen disagree, show the differences and ask before changing either.
 - **Previous season:** a Google Sheet member export (e.g. `Medlemmer-<date> flaskeinnsamling.xlsx`) with columns Oppgave (Innsamling/Mottak), Rode, Øving and Vakt. It is private: after the user logs in, fetch `…/export?format=csv&gid=<gid>` via `page.context().request`. In-page `fetch` fails on CORS.
 - **Spond activities:** use only the group **"Tasta Skolekorps - Medlemmer"** and never read the user's other groups. In the page context, call `api.spond.com/core/v1/sponds?groupId=<id>&includeHidden=true&minStartTimestamp=…&maxEndTimestamp=…` with the bearer token from `localStorage.token`, and never return the token. The activities are individual lessons ("Spilletime…", "Messingundervisning…"). Ignore the "Flaskeinnsamling" and "Tilsynsvakt" events. Times are UTC, so convert to Europe/Oslo.
 - **Rode polygons:** Kommunekart https://kommunekart.com/klient/stavanger/roder (WMS layer `1103_WMS_Roder:RODER`, feature type `Lokalutvalgområde`, attribute `Nummer`). From the Kommunekart page origin, `POST /api/WebPublisher/GfiProxy` (form: `service=WMS&srs=EPSG:4326&tolerance=5&queryLayers=1103_WMS_Roder:RODER;&x=<lon>&y=<lat>&appId=-StavangerApp-Roder-`) returns `Nummer` + `Geometry.Positions` (`X`=lon, `Y`=lat). Use `GfiProxyNoGeom` for point→rode lookup only.
@@ -49,11 +50,12 @@ The user always logs in to every site themselves in the Playwright browser. Neve
 - Published via GitHub Pages from this repo. The user expects **commit + push to `main`** after each completed change.
 
 ## After every assignment or reception change
-1. Update `byRode` (and `dwellings` for newly used roder) plus the panel counts ("N musikanter · N roder") in `rodekart.html`.
-2. Update `assignments` / `reception` in the season file, and [vaktliste.html](../../vaktliste.html) for reception.
-3. Serve the repo locally (`python -m http.server`) and add `?v=<n>` to bypass the cache. Check that `byRode` equals the season file's `assignments`.
-4. Regenerate the PDF: open `rodekart.html?ark`, wait for `window.arkReady`, then `page.pdf` (A4, `preferCSSPageSize`). Reset `emulateMedia` to screen afterwards. Check that there are no broken tiles and that the overview page doesn't overflow.
-5. Commit and push.
+1. Update the Flaskeinnsamling field in Styreportalen for every affected member, then re-read the grid to verify.
+2. Update `byRode` (and `dwellings` for newly used roder) plus the panel counts ("N musikanter · N roder") in `rodekart.html`.
+3. Update `assignments` / `reception` in the season file, and [vaktliste.html](../../vaktliste.html) for reception.
+4. Serve the repo locally (`python -m http.server`) and add `?v=<n>` to bypass the cache. Check that `byRode` equals the season file's `assignments`.
+5. Regenerate the PDF: open `rodekart.html?ark`, wait for `window.arkReady`, then `page.pdf` (A4, `preferCSSPageSize`). Reset `emulateMedia` to screen afterwards. Check that there are no broken tiles and that the overview page doesn't overflow.
+6. Commit and push.
 
 ## Deliverables per season
 - [rodekart.html](../../rodekart.html): a self-contained Leaflet map with embedded `polys` and `byRode`, Kartverket `topograatone` tiles, assigned roder coloured, free roder grey and dashed. Only show free roder between the northern line 2114–2117 and the southern line 2002–2005 (`shownFree`). Every label shows its mailbox count. Show contact persons and Vipps info.
