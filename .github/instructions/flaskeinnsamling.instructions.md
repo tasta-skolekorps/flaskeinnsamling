@@ -8,12 +8,12 @@ Bottle and can collection (flaskeinnsamling) is a fundraiser. Musicians collect 
 
 ## Calendar
 - A **season** is the school year (Aug–Jun) and has 3 collections: autumn, winter and spring. The dates are set in advance.
-- Collection day: **Wednesday 17:00–21:00**. Reception is at **Byfjord skole**. Bottles and cans are sorted into Infinitum bags, and a truck picks them up at the end. Amounts are not recorded.
-- Notices (lapper) go into mailboxes on the **Monday at least 2 weeks before** collection, unless overridden in the season file's `notices` (`{"<collection>": "<notice date>"}`, e.g. autumn break). The text is written outside this repo.
+- Collection day: **Wednesday 17:00–20:30**. Reception is at **Byfjord skole**. Bottles and cans are sorted into Infinitum bags, and a truck picks them up at the end. Amounts are not recorded.
+- Notices (lapper) go into mailboxes on the **Monday at least 2 weeks before** collection, unless overridden in the season file's `notices` (`{"<collection>": "<latest mailbox date>"}`, e.g. autumn break). Packages are handed out on the date in `handouts` (`{"<collection>": "<date>"}`), if set. The text is written outside this repo.
 
 ## Who does what
 - Korps groups: aspirantkorps, juniorkorps, mellomkorps, seniorkorps. Only mellom and senior take part.
-- **Reception (Byfjord skole):** needs **6 seniors per slot** (18 total) in slots **17:00–18:30, 18:30–20:00 and 20:00–21:00**. Put each one in a slot that doesn't overlap their activities in **Spond** that Wednesday. A slot may have one extra if the user approves.
+- **Reception (Byfjord skole):** needs **6 seniors per slot** (18 total) in slots **17:00–18:30, 18:30–20:00 and 20:00–20:30**. Put each one in a slot that doesn't overlap their activities in **Spond** that Wednesday. A slot may have one extra if the user approves.
 - **Rode collectors:** all of mellomkorps + seniors not needed in reception. The youngest seniors collect first, but the **user picks who stays in reception**. Ask.
 - Tell the user which collectors have Spond lessons on collection day. They can still collect, but should be warned.
 - Edge cases (e.g. too few or too many seniors): ask the user and decide case by case.
