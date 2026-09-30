@@ -9,7 +9,7 @@ Bottle and can collection (flaskeinnsamling) is a fundraiser. Musicians collect 
 ## Calendar
 - A **season** is the school year (Aug–Jun) and has 3 collections: autumn, winter and spring. The dates are set in advance.
 - Collection day: **Wednesday 17:00–20:30**. Reception is at **Byfjord skole**. Bottles and cans are sorted into Infinitum bags, and a truck picks them up at the end. Amounts are not recorded.
-- Notices (lapper) go into mailboxes on the **Monday at least 2 weeks before** collection, unless overridden in the season file's `notices` (`{"<collection>": "<latest mailbox date>"}`, e.g. autumn break). Packages are handed out on the date in `handouts` (`{"<collection>": "<date>"}`), if set. The text is written outside this repo.
+- Packages with notices (lapper) are handed out to musicians on the **Monday at least 2 weeks before** collection, unless overridden in the season file's `handouts` (`{"<collection>": "<date>"}`, e.g. autumn break). Notices go into mailboxes that same week: **preferably Wednesday, Sunday at the latest**. The text is written outside this repo.
 
 ## Who does what
 - Korps groups: aspirantkorps, juniorkorps, mellomkorps, seniorkorps. Only mellom and senior take part.
