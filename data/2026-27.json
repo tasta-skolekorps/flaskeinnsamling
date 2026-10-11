@@ -27,6 +27,28 @@
     "2157": [7, 7]
   },
   "musicians": [],
+  "korps": {
+    "Mellomkorps": [
+      "Alma Sygrove Biland", "Kaja Agathe Bakke", "Aurora Gribbestad Hetland", "Julie Sørbø Kristiansen",
+      "Sigrid Kvernenes Pedersen", "Max Müller-Eie", "Wilmer Vere", "Viktor Rydberg", "Henrik Munoz",
+      "Nora Hjelmervik", "Eolos Maridakis", "Guro Kvadsheim Neset", "Dennis Oliversen Hamre", "Edvard Zihao Zhao",
+      "Idunn Lunde Melberg", "Erlend Pedersen", "Ronja Sofie Ekroll", "Sivert Fiskå", "Mingsen Liu",
+      "Lucca Bergsagel", "Mia Karlson Myklebust", "Tønnes Ognedal Fosså", "Storm Fuglesten Sværen",
+      "Tuva Sofie Sem", "Yaman Radwan", "Idun Sofie Ellingsen", "Ingeborg Braut Winnem", "Antonina Szubska",
+      "Amanda Wittmeyer", "Eirill Lien Johansen", "Albert Langenes Smith", "Marcel Brackeva",
+      "Mohamed Masjd Balaous", "Even Valen-Sendestad Torstrup", "Ellinor Havnen Drangeid", "Leah Celine Wolden"
+    ],
+    "Seniorkorps": [
+      "Ludvig Elgheim Johansson", "Ida Barkved Holta", "Ingeborg Svanevik Haga", "Linde Kristensen", "Ipek Ziya",
+      "Marlen Munoz", "Malene Aanonsen", "Mallin Idsøe", "Lavrans Vicevic Johannesen", "Ella Oliversen Hamre",
+      "Astrid Kjøsnes Elvik", "Hanna Gjerde Halvorsen", "Mina Nur Anli", "Nida Nur Anli", "Olav Ådnøy",
+      "Ada Gribbestad Hetland", "Kristiane Larsen Eie", "Martine Kvernenes Pedersen", "Aurel Maridakis",
+      "Ruixi Liu", "Sigrid Elisabeth Bakke", "Elias Grude Simonsen", "Lennart Vicevic Johannesen",
+      "Isabelle Brackeva", "Elin Hennum Øvrebotten", "Martha Karolina Ascher", "Ingrid Revheim Rydberg",
+      "Mie Neumann Andersen", "David Bommen Rasmussen", "Simon K. Hoem", "Ragnhild Langeland",
+      "Leah Johanna Katharina Ascher", "Torjus Solum-Larsen", "Tor Vetle Tjelta", "Ellinor Haneferd-Halset"
+    ]
+  },
   "assignments": {
     "2001": ["Alma Sygrove Biland"],
     "2002": ["Ludvig Elgheim Johansson"],
@@ -49,6 +71,7 @@
     "2019": ["Eolos Maridakis"],
     "2020": ["Guro Kvadsheim Neset"],
     "2021": ["Dennis Oliversen Hamre"],
+    "2022": ["Amanda Wittmeyer"],
     "2023": ["Edvard Zihao Zhao"],
     "2024": ["Idunn Lunde Melberg"],
     "2026": ["Lavrans Vicevic Johannesen"],
@@ -71,7 +94,6 @@
     "2107": ["Idun Sofie Ellingsen"],
     "2108": ["Ingeborg Braut Winnem"],
     "2109": ["Antonina Szubska"],
-    "2110": ["Amanda Wittmeyer"],
     "2111": ["Eirill Lien Johansen"],
     "2112": ["Olav Ådnøy"],
     "2113": ["Albert Langenes Smith"],
