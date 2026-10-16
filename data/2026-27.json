@@ -3,16 +3,7 @@
   "collections": ["2026-10-21", "2027-01-06", "2027-05-19"],
   "handouts": { "2026-10-21": "2026-10-12" },
   "notices": { "2027-01-06": "2026-12-27" },
-  "contacts": [
-    { "name": "Albert Idsøe", "phone": "92270004" },
-    { "name": "Ann-Iren Hoem", "phone": "97533006" },
-    { "name": "Cathrine Barked", "phone": "95751159" },
-    { "name": "Helen Haneferd", "phone": "99577758" },
-    { "name": "Leif Bjarte Johansson", "phone": "92423946" },
-    { "name": "Mirjam Vere", "phone": "94870872" },
-    { "name": "Rami Radwan", "phone": "95449114" },
-    { "name": "Sølve Hetland", "phone": "93428218" }
-  ],
+  "contacts": ["Albert Idsøe", "Ann-Iren Hoem", "Cathrine Barked", "Helen Haneferd", "Leif Bjarte Johansson", "Mirjam Vere", "Rami Radwan", "Sølve Hetland"],
   "vipps": "#87153",
   "housing": {
     "2001": [56, 60], "2002": [75, 81], "2003": [46, 59], "2004": [56, 68], "2005": [62, 117],
