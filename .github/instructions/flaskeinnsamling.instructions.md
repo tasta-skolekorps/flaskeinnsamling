@@ -44,11 +44,11 @@ The user always logs in to every site themselves in the Playwright browser. Neve
 - No generator scripts. Artifacts are produced by the agent in chat.
 - Store each season in `data/<YYYY-YY>.json` (e.g. `data/2026-27.json`): collection dates, `contacts` (name, phone), `vipps`, `housing` (`{"2001": [addresses, dwellings]}` from Geonorge; dwellings = notices), `assignments` (`{"2001": ["Name", ...]}`) and `reception` (`{"<date>": {"17:00-18:30": ["Name", ...], ...}}`). Read the previous season file to preserve continuity.
 - The repo is **public**. Full names are OK, but **don't commit home addresses, birth dates or parent contact info**. Use them only in memory for matching.
-- 2026-27 collection dates: 2026-10-21, 2027-01-06, 2027-05-19. Contact: Leif Bjarte Johansson, 92423946. Vipps: #87153. For later seasons, read these values from the season file.
+- 2026-27 collection dates: 2026-10-21, 2027-01-06, 2027-05-19. Contacts: the flaskekomité in the season file's `contacts`. Vipps: #87153. For later seasons, read these values from the season file.
 - Full names of musicians are OK in the repo and on the published map.
 - Bokmål for all user-facing text and commit messages. English for code and identifiers.
 - Published via GitHub Pages from this repo. The user expects **commit + push to `main`** after each completed change.
-- Web pages share [theme.css](../../theme.css) (bottle-green theme and side menu). Every page has the same `<nav class="side">` markup, with `aria-current="page"` on its own link. Keep the menu's season, PDF link and contact up to date.
+- Web pages share [theme.css](../../theme.css) (bottle-green theme and side menu). Every page has the same `<nav class="side">` markup, with `aria-current="page"` on its own link. Keep the menu's season and PDF link up to date.
 
 ## After every assignment or reception change
 1. Update the Flaskeinnsamling field in Styreportalen for every affected member, then re-read the grid to verify.
@@ -59,9 +59,10 @@ The user always logs in to every site themselves in the Playwright browser. Neve
 6. Commit and push.
 
 ## Deliverables per season
-- [rodekart.html](../../rodekart.html): a self-contained Leaflet map with embedded `polys` and `byRode`, Kartverket `topograatone` tiles, assigned roder coloured, free roder grey and dashed. Only show free roder between the northern line 2114–2117 and the southern line 2002–2005 (`shownFree`). Every label shows its mailbox count. Show contact persons and Vipps info.
+- [rodekart.html](../../rodekart.html): a self-contained Leaflet map with embedded `polys` and `byRode`, Kartverket `topograatone` tiles, assigned roder coloured, free roder grey and dashed. Only show free roder between the northern line 2114–2117 and the southern line 2002–2005 (`shownFree`). Every label shows its mailbox count. Show a link to the contact page and Vipps info.
 - Printable PDF `rodeark-<season>.pdf`, generated from `rodekart.html?ark`: one overview page with all roder, names and mailboxes, then **one A4 page per rode** with that rode's map, the responsible name(s) and the number of mailboxes/dwellings (= notices needed). The ark maps load one at a time with tile retries because Kartverket's tile server resets connections under load.
 - Each musician gets a package: the rode page, notices and a **badge**. Don't generate badges. They wear the badge while collecting and return it at the reception at Byfjord skole.
 - Reception duty list [vaktliste.html](../../vaktliste.html): reception seniors grouped by time slot for each collection date.
+- Contact page [kontakt.html](../../kontakt.html): the whole flaskekomité (name, phone) from the season file's `contacts`, plus Vipps. Every other mention of contact (menu footer, pages, rodekart panel, PDF) points to this page instead of listing people.
 - Process one-pager for families [index.html](../../index.html) (Bokmål). It explains how collection day works: notices, time, rode, badge, drop-off at Byfjord skole, contact and Vipps.
 - Flag any collection date that is not a Wednesday.
