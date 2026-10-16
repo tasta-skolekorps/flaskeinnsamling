@@ -22,6 +22,12 @@ body.ark .side{display:none}
 .leaflet-tooltip{pointer-events:none}
 .panel .info{margin-top:6px;padding-top:6px;border-top:1px solid #ddd}
 .panel a{color:var(--glass)}
+.panel .head{display:flex;align-items:flex-start;gap:6px}
+.panel .head h1{flex:1}
+#toggle{flex:none;border:1px solid #bbb;background:#f4f4f4;border-radius:4px;width:30px;height:26px;padding:0;font-size:20px;line-height:1;cursor:pointer;color:var(--glass-dark)}
+.panel.collapsed #more{display:none}
+@media (max-width:800px){.panel{max-width:min(260px,calc(100% - 80px))}}
+@media print{#toggle{display:none}.panel.collapsed #more{display:block}}
 @page{size:A4;margin:10mm}
 @media print{.leaflet-control-zoom,.leaflet-control-attribution,.panel label,.panel input,#hit{display:none}}
 body.ark,html:has(body.ark){height:auto}
@@ -60,14 +66,16 @@ body.ark #map,body.ark .panel{display:none}
 </nav>
 <div id="map"></div>
 <div class="panel">
- <h1>Rodekart – flaskeinnsamling</h1>
+ <div class="head"><h1>Rodekart – flaskeinnsamling</h1><button type="button" id="toggle" aria-expanded="true" aria-controls="more" title="Skjul info">▴</button></div>
  <p>Tasta Skolekorps · 52 musikanter · 53 roder</p>
- <p>Grå stiplede roder samles ikke inn. Zoom inn for å lese tette områder.</p>
  <input type="search" id="search" list="names" placeholder="Søk etter navn …" autocomplete="off">
  <datalist id="names"></datalist>
  <p id="hit"></p>
+ <div id="more">
+ <p>Grå stiplede roder samles ikke inn. Zoom inn for å lese tette områder.</p>
  <label><input type="checkbox" id="free" checked> Vis roder som ikke samles inn</label>
  <div class="info" id="info"></div>
+ </div>
 </div>
 <div id="ark"></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -178,5 +186,9 @@ const find=()=>{
 };
 search.addEventListener('change',find);
 search.addEventListener('keydown',e=>{if(e.key==='Enter')find();});
+const panel=document.querySelector('.panel'),toggle=document.getElementById('toggle');
+const setCollapsed=c=>{panel.classList.toggle('collapsed',c);toggle.setAttribute('aria-expanded',String(!c));toggle.textContent=c?'▾':'▴';toggle.title=c?'Vis info':'Skjul info';};
+setCollapsed(matchMedia('(max-width:800px)').matches);
+toggle.addEventListener('click',()=>setCollapsed(!panel.classList.contains('collapsed')));
 }
 </script></body></html>
