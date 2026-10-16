@@ -13,7 +13,7 @@ Bottle and can collection (flaskeinnsamling) is a fundraiser. Musicians collect 
 
 ## Who does what
 - Korps groups: aspirantkorps, juniorkorps, mellomkorps, seniorkorps. Only mellom and senior take part.
-- **Reception (Byfjord skole):** needs **6 seniors per slot** (18 total) in slots **17:00–18:30, 18:30–20:00 and 20:00–20:30**. Put each one in a slot that doesn't overlap their activities in **Spond** that Wednesday. A slot may have one extra if the user approves.
+- **Reception (Byfjord skole):** needs **6 seniors per slot** (18 total) in slots **17:00–18:30, 18:30–20:00 and 20:00–21:15**. Put each one in a slot that doesn't overlap their activities in **Spond** that Wednesday. A slot may have one extra if the user approves.
 - **Rode collectors:** all of mellomkorps + seniors not needed in reception. The youngest seniors collect first, but the **user picks who stays in reception**. Ask.
 - Tell the user which collectors have Spond lessons on collection day. They can still collect, but should be warned.
 - Edge cases (e.g. too few or too many seniors): ask the user and decide case by case.
