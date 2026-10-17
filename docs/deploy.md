@@ -82,16 +82,16 @@ Remove-Item fic.json
 
 ### 3b. Alternative: user-assigned managed identity
 
-Use this if you cannot create app registrations. Put the identity in a **separate** resource group so it is not deleted if you tear down `rg-flaskeinnsamling` with `aspire destroy`.
+Use this if you cannot create app registrations (the current setup uses this option). Put the identity in the **separate** resource group `github-action-identities`, which holds identities for GitHub Actions, so it is not deleted if you tear down `rg-flaskeinnsamling` with `aspire destroy`.
 
 ```powershell
-az group create --name "rg-flaskeinnsamling-ci" --location $LOCATION
-$APP_ID = az identity create --name "id-github-flaskeinnsamling" --resource-group "rg-flaskeinnsamling-ci" --query clientId -o tsv
-$SP_ID = az identity show --name "id-github-flaskeinnsamling" --resource-group "rg-flaskeinnsamling-ci" --query principalId -o tsv
+az group create --name "github-action-identities" --location $LOCATION
+$APP_ID = az identity create --name "id-github-flaskeinnsamling" --resource-group "github-action-identities" --query clientId -o tsv
+$SP_ID = az identity show --name "id-github-flaskeinnsamling" --resource-group "github-action-identities" --query principalId -o tsv
 az identity federated-credential create `
   --name "github-flaskeinnsamling-production" `
   --identity-name "id-github-flaskeinnsamling" `
-  --resource-group "rg-flaskeinnsamling-ci" `
+  --resource-group "github-action-identities" `
   --issuer "https://token.actions.githubusercontent.com" `
   --subject "repo:tasta-skolekorps/flaskeinnsamling:environment:production" `
   --audiences "api://AzureADTokenExchange"
@@ -192,5 +192,5 @@ Consider setting up a budget alert on the resource group under **Cost Management
 
 - **Rotate the admin key:** run `gh secret set ADMIN_API_KEY --repo tasta-skolekorps/flaskeinnsamling --env production` again, then start the workflow manually.
 - **Troubleshooting:** the log from the "Deploy with Aspire" step shows each Aspire step. In Azure: `az containerapp logs show --resource-group rg-flaskeinnsamling --name api --tail 100` (requires `az extension add --name containerapp`).
-- **Tear everything down:** run `aspire destroy` locally after `az login`. The command deletes the **entire** resource group. The app registration, or the identity in `rg-flaskeinnsamling-ci`, is left in place.
+- **Tear everything down:** run `aspire destroy` locally after `az login`. The command deletes the **entire** resource group. The app registration, or the identity in `github-action-identities`, is left in place.
 - **Upgrade Aspire:** update `ASPIRE_VERSION` in `deploy.yml` together with the Aspire packages in `src/`.
