@@ -167,7 +167,7 @@ public sealed class SeasonImportTests(ApiFixture fx)
     }
 
     [Fact]
-    public async Task SeededSeason_ContainsNoForbiddenFields()
+    public async Task ImportedSeason_ContainsNoForbiddenFields()
     {
         using var response = await fx.Client.GetAsync($"/api/seasons/{ApiFixture.SeasonId}");
         var body = await response.Content.ReadAsStringAsync();

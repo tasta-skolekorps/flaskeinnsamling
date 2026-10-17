@@ -5,8 +5,7 @@ using Azure.Data.Tables;
 namespace Flaskeinnsamling.Api;
 
 // Table schema — PartitionKey is always the season id (e.g. "2026-27").
-//   Seasons     RowKey = season id; Collections, Handouts, Notices, Contacts, Korps (JSON strings), Vipps,
-//               SeedHash (SHA-256 of the data/<season>.json last imported; null if never seeded)
+//   Seasons     RowKey = season id; Collections, Handouts, Notices, Contacts, Korps (JSON strings), Vipps
 //   Housing     RowKey = rode;      Addresses (int), Dwellings (int)
 //   Assignments RowKey = rode;      Names (JSON array string)
 //   Reception   RowKey = "{date}_{slot}"; Date, Slot, Names (JSON array string)
@@ -23,7 +22,6 @@ public sealed class SeasonEntity : ITableEntity
     public string Contacts { get; set; } = "[]";
     public string Korps { get; set; } = "{}";
     public string Vipps { get; set; } = "";
-    public string? SeedHash { get; set; }
 }
 
 public sealed class HousingEntity : ITableEntity
@@ -91,13 +89,6 @@ public sealed class SeasonStore(TableServiceClient service)
     {
         var e = await Seasons.GetEntityIfExistsAsync<SeasonEntity>(season, season, cancellationToken: ct);
         return e.HasValue;
-    }
-
-    /// <summary>Returns whether the season exists and the hash of the seed file it was last imported from.</summary>
-    public async Task<(bool Exists, string? SeedHash)> GetSeedStateAsync(string season, CancellationToken ct = default)
-    {
-        var e = await Seasons.GetEntityIfExistsAsync<SeasonEntity>(season, season, select: ["RowKey", "SeedHash"], cancellationToken: ct);
-        return e.HasValue && e.Value is { } s ? (true, s.SeedHash) : (false, null);
     }
 
     public async Task<SeasonDocument?> GetSeasonAsync(string season, CancellationToken ct = default)
@@ -170,25 +161,11 @@ public sealed class SeasonStore(TableServiceClient service)
     }
 
     /// <summary>
-    /// Admin import: replaces every row of a season but keeps the stored SeedHash, so an unchanged
-    /// seed file does not overwrite the admin's data on the next startup while a changed one does.
+    /// Admin import of a whole season. Upserts the new rows first and only then deletes rows that are
+    /// no longer present, so readers never see an empty season and a failure midway leaves the old
+    /// data mostly intact. The Seasons row is written last, so a new season only appears once complete.
     /// </summary>
     public async Task ReplaceSeasonAsync(SeasonDocument doc, CancellationToken ct = default)
-    {
-        var (_, seedHash) = await GetSeedStateAsync(doc.Season!, ct);
-        await WriteSeasonAsync(doc, seedHash, ct);
-    }
-
-    /// <summary>Seed import from data/&lt;season&gt;.json; records the file hash.</summary>
-    public Task ImportSeedAsync(SeasonDocument doc, string seedHash, CancellationToken ct = default) =>
-        WriteSeasonAsync(doc, seedHash, ct);
-
-    /// <summary>
-    /// Upserts the new rows first and only then deletes rows that are no longer present, so readers
-    /// never see an empty season and a failure midway leaves the old data mostly intact. The Seasons
-    /// row (with SeedHash) is written last so a half-finished seed is retried on the next startup.
-    /// </summary>
-    private async Task WriteSeasonAsync(SeasonDocument doc, string? seedHash, CancellationToken ct)
     {
         var season = doc.Season!;
 
@@ -221,7 +198,6 @@ public sealed class SeasonStore(TableServiceClient service)
             Contacts = JsonSerializer.Serialize(doc.Contacts ?? [], Json),
             Korps = JsonSerializer.Serialize(doc.Korps ?? [], Json),
             Vipps = doc.Vipps ?? "",
-            SeedHash = seedHash,
         }, TableUpdateMode.Replace, ct);
     }
 

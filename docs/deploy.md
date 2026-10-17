@@ -4,13 +4,13 @@ The API (the Aspire solution in `src/`) is deployed automatically to **Azure Con
 
 ## When does the deployment run?
 
-- On every push to `main` that changes `src/**`, `data/**`, the solution file (`*.sln`/`*.slnx`), `global.json`, `aspire.config.json` or `deploy.yml` itself.
+- On every push to `main` that changes `src/**`, the solution file (`*.sln`/`*.slnx`), `global.json`, `aspire.config.json` or `deploy.yml` itself.
 - Manually from **Actions → Deploy API (Azure) → Run workflow**.
 - Only one deployment runs at a time (`concurrency: deploy-production`). A new deployment waits until the previous one has finished.
 
 `main` is protected by a ruleset: changes reach it only through a pull request (squash merge). Merging a PR is the push to `main`, so **deploy runs when a PR is merged to `main`**. Every PR to `main` runs the workflow [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) ("CI"), whose job `build-and-test` (actionlint, `dotnet build` and `dotnet test` of `Flaskeinnsamling.slnx`, including the Aspire integration tests against Azurite in Docker) is a **required status check**. A PR cannot be merged until it passes.
 
-When `data/<season>.json` is changed and merged to `main`, the API re-imports that season on startup, and the file in the repo wins. Changes an admin makes through the API last until the file is changed the next time.
+The season data lives only in Table Storage; the API is the master. A deployment never imports or overwrites data: on startup the API only creates missing tables. Seasons are edited through [`admin.html`](../admin.html). Take a JSON backup there ("Last ned sesongen") before risky operations, and especially before `aspire destroy`, which deletes the storage account.
 
 The workflow signs in to Azure with **OIDC (federated credentials)**. It uses no long-lived Azure passwords or keys. It then runs `aspire deploy --non-interactive`, which builds the API, creates the Azure resources and publishes a new revision.
 
@@ -192,5 +192,5 @@ Consider setting up a budget alert on the resource group under **Cost Management
 
 - **Rotate the admin key:** run `gh secret set ADMIN_API_KEY --repo tasta-skolekorps/flaskeinnsamling --env production` again, then start the workflow manually.
 - **Troubleshooting:** the log from the "Deploy with Aspire" step shows each Aspire step. In Azure: `az containerapp logs show --resource-group rg-flaskeinnsamling --name api --tail 100` (requires `az extension add --name containerapp`).
-- **Tear everything down:** run `aspire destroy` locally after `az login`. The command deletes the **entire** resource group. The app registration, or the identity in `github-action-identities`, is left in place.
+- **Tear everything down:** run `aspire destroy` locally after `az login`. The command deletes the **entire** resource group, including the storage account with all season data, so download a JSON backup of each season in `admin.html` first. The app registration, or the identity in `github-action-identities`, is left in place.
 - **Upgrade Aspire:** update `ASPIRE_VERSION` in `deploy.yml` together with the Aspire packages in `src/`.

@@ -20,8 +20,40 @@ public sealed class ApiFixture : IAsyncLifetime
 
     public HttpClient Client { get; private set; } = default!;
 
-    public JsonObject SeasonFile { get; } = (JsonObject)JsonNode.Parse(
-        File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "data", $"{SeasonId}.json")))!;
+    /// <summary>Synthetic season imported through the admin endpoint at startup; the tests compare against it.</summary>
+    public JsonObject Season { get; } = new()
+    {
+        ["season"] = SeasonId,
+        ["collections"] = new JsonArray("2026-10-21", "2027-01-06", "2027-05-19"),
+        ["handouts"] = new JsonObject { ["2026-10-21"] = "2026-10-05" },
+        ["notices"] = new JsonObject { ["2027-01-06"] = "2026-12-27" },
+        ["contacts"] = new JsonArray("Komité Testesen", "Komité Prøvesen"),
+        ["vipps"] = "#00000",
+        ["housing"] = new JsonObject
+        {
+            ["2001"] = new JsonArray(40, 60),
+            ["2002"] = new JsonArray(50, 81),
+            ["2003"] = new JsonArray(30, 59),
+        },
+        ["korps"] = new JsonObject
+        {
+            ["Mellomkorps"] = new JsonArray("Musikant Én", "Musikant To"),
+            ["Seniorkorps"] = new JsonArray("Senior Én", "Senior To"),
+        },
+        ["assignments"] = new JsonObject
+        {
+            ["2001"] = new JsonArray("Musikant Én"),
+            ["2002"] = new JsonArray("Musikant To", "Musikant Én"),
+        },
+        ["reception"] = new JsonObject
+        {
+            ["2026-10-21"] = new JsonObject
+            {
+                ["17:00-18:30"] = new JsonArray("Senior Én"),
+                ["18:30-20:00"] = new JsonArray("Senior To"),
+            },
+        },
+    };
 
     public async Task InitializeAsync()
     {
@@ -30,7 +62,7 @@ public sealed class ApiFixture : IAsyncLifetime
         builder.Configuration["Parameters:admin-api-key"] = AdminKey;
 
         // The AppHost gives Azurite a named data volume shared with local dev runs. Drop it so every
-        // test run starts from an empty emulator, seeds from data/*.json and never touches dev data.
+        // test run starts from an empty emulator and never touches dev data.
         foreach (var resource in builder.Resources)
         {
             foreach (var mount in resource.Annotations.OfType<ContainerMountAnnotation>()
@@ -46,11 +78,11 @@ public sealed class ApiFixture : IAsyncLifetime
 
         Client = _app.CreateHttpClient("api", "http");
 
-        // Seeding runs in the background after startup; wait until the season is readable.
+        // Tables are created in the background after startup; retry the import until it succeeds.
         while (true)
         {
-            using var response = await Client.GetAsync($"/api/seasons/{SeasonId}", cts.Token);
-            if (response.StatusCode == HttpStatusCode.OK) break;
+            using var response = await Client.SendAsync(Request(HttpMethod.Put, $"/api/seasons/{SeasonId}", Season, AdminKey), cts.Token);
+            if (response.StatusCode == HttpStatusCode.NoContent) break;
             await Task.Delay(500, cts.Token);
         }
     }
