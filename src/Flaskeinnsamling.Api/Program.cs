@@ -13,7 +13,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddOpenApi();
 builder.Services.ConfigureHttpJsonOptions(o => o.SerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All));
 builder.Services.AddSingleton<SeasonStore>();
-builder.Services.AddHostedService<SeedService>();
+builder.Services.AddHostedService<TableInitializer>();
 
 var allowedOrigins = ReadOrigins(builder.Configuration);
 var allowLocalhost = builder.Environment.IsDevelopment();

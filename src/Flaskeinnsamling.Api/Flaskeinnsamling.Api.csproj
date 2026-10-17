@@ -16,9 +16,4 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
   </ItemGroup>
 
-  <!-- Season files from the repo are seeded into Table Storage on startup (when missing or when the file's SHA-256 changed). -->
-  <ItemGroup>
-    <Content Include="..\..\data\*.json" Link="data\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-  </ItemGroup>
-
 </Project>

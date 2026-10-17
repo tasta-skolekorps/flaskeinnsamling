@@ -20,11 +20,6 @@
     <ProjectReference Include="..\..\src\Flaskeinnsamling.AppHost\Flaskeinnsamling.AppHost.csproj" />
   </ItemGroup>
 
-  <!-- The seeded season must equal the repo's season file. -->
-  <ItemGroup>
-    <Content Include="..\..\data\*.json" Link="data\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
   <ItemGroup>
     <Using Include="System.Net" />
     <Using Include="Microsoft.Extensions.DependencyInjection" />

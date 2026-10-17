@@ -12,8 +12,8 @@ public sealed class AssignmentWriteTests(ApiFixture fx)
     {
         get
         {
-            var assigned = fx.SeasonFile["assignments"]!.AsObject().Select(p => p.Key).ToHashSet();
-            return fx.SeasonFile["housing"]!.AsObject().Select(p => p.Key).FirstOrDefault(r => !assigned.Contains(r)) ?? "9999";
+            var assigned = fx.Season["assignments"]!.AsObject().Select(p => p.Key).ToHashSet();
+            return fx.Season["housing"]!.AsObject().Select(p => p.Key).FirstOrDefault(r => !assigned.Contains(r)) ?? "9999";
         }
     }
 

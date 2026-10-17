@@ -1,11 +1,13 @@
-// Shared client for the flaskeinnsamling API. Pages render their embedded data first
-// and re-render with API data when (and if) it arrives. Never throws; null means "use fallback".
+// Shared client for the flaskeinnsamling API, which is the master for all season data.
+// Pages render their embedded snapshot first (offline fallback) and re-render with API data when it
+// arrives. Never throws; null means "use fallback".
 (function () {
   // Deployed API (Azure Container Apps, see docs/deploy.md).
   // Empty = API disabled: pages use only their embedded data and make no network requests.
   const API_BASE = 'https://api.proudpebble-94a430f0.norwayeast.azurecontainerapps.io';
   const SEASON = '2026-27';
-  const TIMEOUT_MS = 4000;
+  // Generous, because the API scales to zero and a cold start can take several seconds.
+  const TIMEOUT_MS = 15000;
 
   const isLoopback = host => /^(localhost|127\.0\.0\.1|\[::1\])$/i.test(host);
 
@@ -61,7 +63,7 @@
     return cache[s];
   }
 
-  // True for a non-empty plain object (an empty one usually means the API isn't seeded yet).
+  // True for a non-empty plain object (an empty one usually means the season has no data yet).
   const hasEntries = v => !!v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).length > 0;
 
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

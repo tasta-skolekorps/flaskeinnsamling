@@ -6,7 +6,7 @@ namespace Flaskeinnsamling.Tests;
 public sealed class SeasonReadTests(ApiFixture fx)
 {
     [Fact]
-    public async Task ListSeasons_ContainsSeededSeason()
+    public async Task ListSeasons_ContainsImportedSeason()
     {
         var seasons = (await fx.GetJsonAsync("/api/seasons")).AsArray().Select(n => n!.GetValue<string>());
         Assert.Contains(ApiFixture.SeasonId, seasons);
@@ -20,11 +20,11 @@ public sealed class SeasonReadTests(ApiFixture fx)
     [InlineData("korps")]
     [InlineData("assignments")]
     [InlineData("reception")]
-    public async Task GetSeason_FieldEqualsSeasonFile(string field)
+    public async Task GetSeason_FieldEqualsImportedSeason(string field)
     {
         var season = await fx.GetJsonAsync($"/api/seasons/{ApiFixture.SeasonId}");
 
-        var expected = fx.SeasonFile[field];
+        var expected = fx.Season[field];
         var actual = season[field];
         Assert.True(JsonNode.DeepEquals(expected, actual),
             $"'{field}' differs.\nExpected: {expected?.ToJsonString()}\nActual:   {actual?.ToJsonString()}");
@@ -39,12 +39,12 @@ public sealed class SeasonReadTests(ApiFixture fx)
     }
 
     [Fact]
-    public async Task GetAssignmentsAndReception_EqualSeasonFile()
+    public async Task GetAssignmentsAndReception_EqualImportedSeason()
     {
         var assignments = await fx.GetJsonAsync($"/api/seasons/{ApiFixture.SeasonId}/assignments");
         var reception = await fx.GetJsonAsync($"/api/seasons/{ApiFixture.SeasonId}/reception");
-        Assert.True(JsonNode.DeepEquals(fx.SeasonFile["assignments"], assignments), "assignments differ");
-        Assert.True(JsonNode.DeepEquals(fx.SeasonFile["reception"], reception), "reception differs");
+        Assert.True(JsonNode.DeepEquals(fx.Season["assignments"], assignments), "assignments differ");
+        Assert.True(JsonNode.DeepEquals(fx.Season["reception"], reception), "reception differs");
     }
 
     [Theory]

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="no"><head><meta charset="utf-8"><title>Admin – flaskeinnsamling Tasta Skolekorps</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<link rel="stylesheet" href="theme.css">
+<style>
+main{max-width:960px}
+h1{font-size:24px;margin:0 0 4px}
+h2{font-size:18px;margin:28px 0 8px;padding-bottom:4px}
+h3{font-size:16px;margin:16px 0 6px;color:var(--glass-dark)}
+p{margin:6px 0}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input,select,textarea,button{font:inherit}
+input[type=text],input[type=password],input[type=search],select,textarea{padding:6px 8px;border:1px solid #b8d3c2;border-radius:6px;box-sizing:border-box}
+button{padding:6px 12px;border:1px solid var(--glass);background:var(--glass);color:#fff;border-radius:6px;cursor:pointer}
+button.ghost{background:#fff;color:var(--glass)}
+button:disabled{opacity:.5;cursor:default}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:4px 6px;border-bottom:1px solid #e3efe7;vertical-align:middle}
+td.num{text-align:right;width:70px;color:#555}
+td.r{width:56px;font-weight:600}
+td input{width:100%}
+td.act{width:150px;white-space:nowrap}
+.slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.slot{border:1px solid #cfe3d6;border-top:4px solid var(--glass);border-radius:6px;padding:8px 10px;background:#fbfdfb}
+.slot textarea{width:100%;min-height:130px;margin:4px 0}
+.msg{font-size:13px;margin-left:6px}
+.ok{color:var(--glass)}
+.err{color:#b00020}
+.muted{color:#666;font-size:14px}
+.changed input,.changed textarea{border-color:var(--amber);background:#fff8ee}
+#json{width:100%;min-height:200px;font-family:ui-monospace,Consolas,monospace;font-size:12px}
+[hidden]{display:none!important}
+</style></head><body class="has-side">
+<nav class="side">
+ <a class="brand" href="index.html"><svg width="24" height="48" viewBox="0 0 24 48" aria-hidden="true"><path d="M9 1h6v5l-1 1v7c0 2 6 5 6 11v19a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V25c0-6 6-9 6-11V7L9 6z" fill="#bfe8cf"/><rect x="6" y="27" width="12" height="10" rx="1.5" fill="#d08a2a"/></svg><span><b>Flaskeinnsamling</b><small>Tasta Skolekorps</small></span></a>
+ <a href="index.html">Slik foregår det</a>
+ <a href="rodekart.html">Rodekart</a>
+ <a href="rodeark-2026-27.pdf">Rodeark<span class="wide"> (PDF)</span></a>
+ <a href="vaktliste.html">Vaktliste<span class="wide"> mottak</span></a>
+ <a href="kontakt.html">Kontakt</a>
+ <div class="side-foot">Sesong 2026-27<br><a href="kontakt.html">Kontakt</a> · Vipps #87153</div>
+</nav>
+<main>
+<h1>Admin – flaskeinnsamling</h1>
+<p class="muted">API-et er fasit for rodefordeling og mottaksvakter. Endringer her vises på rodekartet og vaktlisten med en gang. Rodearket (PDF) må lages på nytt etterpå.</p>
+
+<h2>Tilgang</h2>
+<div class="row">
+ <label for="key">Admin-nøkkel</label>
+ <input type="password" id="key" autocomplete="off" spellcheck="false" size="34" placeholder="Lim inn nøkkelen fra passordlageret">
+ <button type="button" id="forget" class="ghost">Glem nøkkel</button>
+</div>
+<p class="muted">Nøkkelen lagres bare i denne fanen (sessionStorage) og slettes når fanen lukkes.</p>
+
+<div class="row" style="margin-top:12px">
+ <label for="season">Sesong</label>
+ <select id="season"></select>
+ <button type="button" id="reload" class="ghost">Last inn på nytt</button>
+ <span id="status" class="msg"></span>
+</div>
+
+<section id="editor" hidden>
+<h2>Rodefordeling</h2>
+<p class="muted">Skriv navnene adskilt med komma. Tomt felt = roden samles ikke inn.</p>
+<div class="row"><input type="search" id="filter" placeholder="Filtrer på rode eller navn …" size="34"></div>
+<table><thead><tr><th>Rode</th><th>Ansvarlig(e)</th><th class="num">Postkasser</th><th></th></tr></thead><tbody id="roder"></tbody></table>
+<div class="row" style="margin-top:8px">
+ <input type="text" id="newRode" placeholder="Ny rode (4 siffer)" size="16" inputmode="numeric" pattern="\d{4}">
+ <button type="button" id="addRode" class="ghost">Legg til rode</button>
+</div>
+
+<h2>Mottaksvakter (Byfjord skole)</h2>
+<p class="muted">Ett navn per linje. Tom vakt = ingen på vakt.</p>
+<div id="reception"></div>
+
+<h2>Hele sesongen (JSON)</h2>
+<p class="muted">Last ned som sikkerhetskopi, eller importer en hel sesong (f.eks. ny sesong). Import <b>erstatter alt</b> i sesongen som står i feltet <code>season</code>.</p>
+<div class="row">
+ <button type="button" id="download" class="ghost">Last ned sesongen</button>
+ <label class="ghost">Velg fil … <input type="file" id="file" accept="application/json,.json"></label>
+</div>
+<textarea id="json" spellcheck="false" placeholder='{"season":"2027-28","collections":[...], ...}'></textarea>
+<div class="row"><button type="button" id="import">Importer</button><span id="importMsg" class="msg"></span></div>
+</section>
+</main>
+<script src="api.js"></script>
+<script>
+(() => {
+  const base = flaskeApi.base, esc = flaskeApi.esc;
+  const KEY_STORE = 'flaskeAdminKey';
+  const DEFAULT_SLOTS = ['17:00-18:30', '18:30-20:00', '20:00-21:15'];
+  const $ = id => document.getElementById(id);
+  const keyInput = $('key'), seasonSel = $('season'), status = $('status');
+  let doc = null;
+
+  keyInput.value = sessionStorage.getItem(KEY_STORE) || '';
+  keyInput.addEventListener('input', () => {
+    const v = keyInput.value.trim();
+    v ? sessionStorage.setItem(KEY_STORE, v) : sessionStorage.removeItem(KEY_STORE);
+  });
+  $('forget').addEventListener('click', () => { sessionStorage.removeItem(KEY_STORE); keyInput.value = ''; });
+
+  const say = (el, text, ok) => { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); };
+  const splitNames = (s, sep) => s.split(sep).map(n => n.trim()).filter(Boolean);
+  const fmtDate = d => {
+    const s = new Date(d + 'T12:00').toLocaleDateString('nb-NO', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'});
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  };
+
+  async function api(method, path, body) {
+    if (!base) throw new Error('API-et er ikke satt opp (API_BASE i api.js).');
+    const headers = {Accept: 'application/json'};
+    if (method !== 'GET') {
+      const key = keyInput.value.trim();
+      if (!key) throw new Error('Lim inn admin-nøkkelen først.');
+      headers['X-Admin-Key'] = key;
+      headers['Content-Type'] = 'application/json';
+    }
+    const res = await fetch(base + path, {method, headers, mode: 'cors', cache: 'no-store', body: body === undefined ? undefined : JSON.stringify(body)});
+    if (res.status === 401) throw new Error('Feil admin-nøkkel.');
+    if (res.status === 404) throw new Error('Fant ikke sesongen.');
+    if (!res.ok) {
+      let detail = 'HTTP ' + res.status;
+      try {
+        const p = await res.json();
+        if (p && p.errors) detail = Object.entries(p.errors).map(([k, v]) => k + ': ' + [].concat(v).join(' ')).join('; ');
+        else if (p && p.title) detail = p.title;
+      } catch (e) { /* not JSON */ }
+      throw new Error(detail);
+    }
+    return res.status === 204 ? null : res.json();
+  }
+
+  async function loadSeasons() {
+    say(status, 'Henter sesonger … (API-et kan bruke noen sekunder på å våkne)', true);
+    try {
+      const list = await api('GET', '/api/seasons');
+      const wanted = new URLSearchParams(location.search).get('season') || flaskeApi.season;
+      const options = [...new Set([...list, wanted])].sort();
+      seasonSel.innerHTML = options.map(s => `<option${s === wanted ? ' selected' : ''}>${esc(s)}</option>`).join('');
+      await loadSeason();
+    } catch (e) { say(status, e.message, false); }
+  }
+
+  async function loadSeason() {
+    const s = seasonSel.value;
+    say(status, 'Henter ' + s + ' …', true);
+    try {
+      doc = await api('GET', '/api/seasons/' + encodeURIComponent(s));
+      render();
+      $('editor').hidden = false;
+      say(status, 'Hentet ' + s + '.', true);
+    } catch (e) {
+      doc = null;
+      $('editor').hidden = false;
+      $('roder').innerHTML = ''; $('reception').innerHTML = '';
+      say(status, e.message + ' Bruk import nederst for å opprette sesongen.', false);
+    }
+  }
+
+  function render() { renderRoder(); renderReception(); }
+
+  function renderRoder() {
+    const housing = doc.housing || {}, assignments = doc.assignments || {};
+    const roder = [...new Set([...Object.keys(housing), ...Object.keys(assignments)])].sort();
+    $('roder').innerHTML = roder.map(r => {
+      const names = (assignments[r] || []).join(', ');
+      const dw = Array.isArray(housing[r]) ? housing[r][1] : '';
+      return `<tr data-rode="${esc(r)}"><td class="r">${esc(r)}</td>
+        <td><input type="text" value="${esc(names)}" data-orig="${esc(names)}" aria-label="Ansvarlig for rode ${esc(r)}"></td>
+        <td class="num">${esc(dw)}</td>
+        <td class="act"><button type="button">Lagre</button><span class="msg"></span></td></tr>`;
+    }).join('');
+    applyFilter();
+  }
+
+  function renderReception() {
+    const reception = doc.reception || {};
+    const dates = [...new Set([...(doc.collections || []), ...Object.keys(reception)])].sort();
+    $('reception').innerHTML = dates.map(d => {
+      const slots = [...new Set([...DEFAULT_SLOTS, ...Object.keys(reception[d] || {})])].sort();
+      return `<h3>${esc(fmtDate(d))}</h3><div class="slots">` + slots.map(slot => {
+        const names = ((reception[d] || {})[slot] || []).join('\n');
+        return `<div class="slot" data-date="${esc(d)}" data-slot="${esc(slot)}"><b>${esc(slot.replace('-', '–'))}</b>
+          <textarea data-orig="${esc(names)}" aria-label="Vakt ${esc(d)} ${esc(slot)}">${esc(names)}</textarea>
+          <div class="row"><button type="button">Lagre</button><span class="msg"></span></div></div>`;
+      }).join('') + '</div>';
+    }).join('') || '<p class="muted">Sesongen har ingen innsamlingsdatoer.</p>';
+  }
+
+  function applyFilter() {
+    const q = $('filter').value.trim().toLowerCase();
+    for (const tr of $('roder').rows) {
+      const text = (tr.dataset.rode + ' ' + tr.querySelector('input').value).toLowerCase();
+      tr.hidden = !!q && !text.includes(q);
+    }
+  }
+
+  const markChanged = (box, field) => box.classList.toggle('changed', field.value !== field.dataset.orig);
+
+  async function save(box, field, path, names) {
+    const btn = box.querySelector('button'), msg = box.querySelector('.msg');
+    btn.disabled = true; say(msg, 'Lagrer …', true);
+    try {
+      await api('PUT', path, names);
+      field.dataset.orig = field.value; markChanged(box, field);
+      say(msg, 'Lagret', true);
+    } catch (e) { say(msg, e.message, false); }
+    finally { btn.disabled = false; }
+  }
+
+  $('roder').addEventListener('input', e => { const tr = e.target.closest('tr'); if (tr) markChanged(tr, e.target); });
+  $('roder').addEventListener('click', e => {
+    const tr = e.target.closest('tr');
+    if (!tr || e.target.tagName !== 'BUTTON') return;
+    const input = tr.querySelector('input'), names = splitNames(input.value, ',');
+    input.value = names.join(', ');
+    save(tr, input, `/api/seasons/${encodeURIComponent(seasonSel.value)}/assignments/${encodeURIComponent(tr.dataset.rode)}`, names);
+  });
+  $('roder').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.target.closest('tr').querySelector('button').click(); });
+
+  $('reception').addEventListener('input', e => { const box = e.target.closest('.slot'); if (box) markChanged(box, e.target); });
+  $('reception').addEventListener('click', e => {
+    const box = e.target.closest('.slot');
+    if (!box || e.target.tagName !== 'BUTTON') return;
+    const area = box.querySelector('textarea'), names = splitNames(area.value, /\r?\n/);
+    area.value = names.join('\n');
+    save(box, area, `/api/seasons/${encodeURIComponent(seasonSel.value)}/reception/${encodeURIComponent(box.dataset.date)}/${encodeURIComponent(box.dataset.slot)}`, names);
+  });
+
+  $('filter').addEventListener('input', applyFilter);
+  $('addRode').addEventListener('click', () => {
+    const r = $('newRode').value.trim();
+    if (!/^\d{4}$/.test(r) || !doc) return;
+    doc.assignments = doc.assignments || {};
+    if (!doc.assignments[r]) doc.assignments[r] = [];
+    $('newRode').value = '';
+    renderRoder();
+    const tr = [...$('roder').rows].find(t => t.dataset.rode === r);
+    if (tr) { tr.hidden = false; tr.querySelector('input').focus(); }
+  });
+
+  seasonSel.addEventListener('change', loadSeason);
+  $('reload').addEventListener('click', loadSeason);
+
+  $('download').addEventListener('click', async () => {
+    try {
+      const fresh = await api('GET', '/api/seasons/' + encodeURIComponent(seasonSel.value));
+      const blob = new Blob([JSON.stringify(fresh, null, 2) + '\n'], {type: 'application/json'});
+      const a = Object.assign(document.createElement('a'), {href: URL.createObjectURL(blob), download: `flaskeinnsamling-${fresh.season}-${new Date().toISOString().slice(0, 10)}.json`});
+      a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    } catch (e) { say($('importMsg'), e.message, false); }
+  });
+  $('file').addEventListener('change', async e => { const f = e.target.files[0]; if (f) $('json').value = await f.text(); });
+  $('import').addEventListener('click', async () => {
+    const msg = $('importMsg');
+    let body;
+    try { body = JSON.parse($('json').value); } catch (e) { return say(msg, 'Ugyldig JSON: ' + e.message, false); }
+    const s = body && body.season;
+    if (!/^\d{4}-\d{2}$/.test(s || '')) return say(msg, 'Feltet "season" mangler eller er ugyldig (f.eks. 2027-28).', false);
+    if (!confirm(`Erstatte ALT i sesong ${s} med innholdet i feltet?`)) return;
+    say(msg, 'Importerer …', true);
+    try {
+      await api('PUT', '/api/seasons/' + encodeURIComponent(s), body);
+      say(msg, 'Importert ' + s + '.', true);
+      if (![...seasonSel.options].some(o => o.value === s)) seasonSel.add(new Option(s, s));
+      seasonSel.value = s;
+      await loadSeason();
+    } catch (e) { say(msg, e.message, false); }
+  });
+
+  loadSeasons();
+})();
+</script>
+</body></html>

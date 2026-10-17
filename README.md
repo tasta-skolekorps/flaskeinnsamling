@@ -35,14 +35,16 @@ aspire wait api
 aspire stop
 ```
 
-On startup the tables are created, and each `data/<season>.json` is imported if the season is missing or the file's SHA-256 differs from the `SeedHash` stored on the season. A changed file in the repo therefore wins, so the repo mirrors Styreportalen. Admin changes made through the API keep the stored `SeedHash`, so they survive restarts until the repo file changes.
+The API (Azure Table Storage) is the **master** for all season data. There are no season files in the repo and nothing is imported on startup: startup only creates missing tables and never touches existing rows. Seasons are created and edited through the admin page [`admin.html`](admin.html) (or the admin endpoints below). Use its "Last ned sesongen" button to take a JSON backup.
+
+The public pages ([`rodekart.html`](rodekart.html), [`vaktliste.html`](vaktliste.html), [`kontakt.html`](kontakt.html)) keep an embedded snapshot as an offline fallback, render it first, and re-render with API data when it arrives (timeout 15 s, to cover cold starts).
 
 ### Endpoints
 
 | Method | Path | Description |
 | --- | --- | --- |
 | GET | `/api/seasons` | List of seasons, e.g. `["2026-27"]` |
-| GET | `/api/seasons/{season}` | The whole season in the same format as `data/<season>.json` |
+| GET | `/api/seasons/{season}` | The whole season (`collections`, `handouts`, `notices`, `contacts`, `vipps`, `housing`, `korps`, `assignments`, `reception`) |
 | PUT | `/api/seasons/{season}` | Replaces the whole season (import). Admin |
 | GET | `/api/seasons/{season}/assignments` | `{"2001": ["Name"]}` |
 | PUT | `/api/seasons/{season}/assignments/{rode}` | Body `["Name"]`; an empty list deletes. Admin |

@@ -8,15 +8,15 @@ public sealed class ReceptionWriteTests(ApiFixture fx)
     private const string Season = ApiFixture.SeasonId;
     private const string Date = "2026-10-21";
 
-    /// <summary>A slot that is not in the season file, so writes never clobber real reception data.</summary>
+    /// <summary>A slot that is not in the imported season, so writes never clobber real reception data.</summary>
     private const string FreeSlot = "21:15-22:00";
 
     private async Task<JsonNode?> GetSlotAsync(string date, string slot) =>
         (await fx.GetJsonAsync($"/api/seasons/{Season}/reception"))[date]?[slot];
 
     [Fact]
-    public void FreeSlot_IsNotInSeasonFile() =>
-        Assert.Null(fx.SeasonFile["reception"]?[Date]?[FreeSlot]);
+    public void FreeSlot_IsNotInImportedSeason() =>
+        Assert.Null(fx.Season["reception"]?[Date]?[FreeSlot]);
 
     [Fact]
     public async Task Put_WithoutKey_Returns401AndDoesNotWrite()
@@ -51,7 +51,7 @@ public sealed class ReceptionWriteTests(ApiFixture fx)
             Assert.True(JsonNode.DeepEquals(new JsonArray("Vakt Testesen"), season["reception"]![Date]![FreeSlot]));
 
             // Existing slots on the same date are untouched.
-            foreach (var (slot, names) in fx.SeasonFile["reception"]![Date]!.AsObject())
+            foreach (var (slot, names) in fx.Season["reception"]![Date]!.AsObject())
                 Assert.True(JsonNode.DeepEquals(names, season["reception"]![Date]![slot]), $"slot {slot} changed");
 
             using (var clear = await fx.PutAsync(url, new JsonArray(), fx.AdminKey))
@@ -69,8 +69,8 @@ public sealed class ReceptionWriteTests(ApiFixture fx)
     public async Task Put_NewDate_RoundTripsAndEmptyArrayRemovesDate()
     {
         const string date = "2027-01-06";
-        Assert.Null(fx.SeasonFile["reception"]?[date]?[FreeSlot]);
-        var hadDate = fx.SeasonFile["reception"]?[date] is not null;
+        Assert.Null(fx.Season["reception"]?[date]?[FreeSlot]);
+        var hadDate = fx.Season["reception"]?[date] is not null;
         var url = $"/api/seasons/{Season}/reception/{date}/{FreeSlot}";
         try
         {
