@@ -11,7 +11,8 @@
 
 ## What I Own
 
-- `.github/workflows/` deploy workflow (push to `main` → deploy)
+- `.github/workflows/deploy.yml` deploy workflow (merge to `main` → deploy)
+- `.github/workflows/ci.yml` PR CI workflow (job `build-and-test`, required status check on `main`)
 - Azure environment config (region `norwayeast`, resource group, identity)
 - Setup docs for the one-time Azure/GitHub configuration
 

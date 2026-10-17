@@ -2,6 +2,19 @@
 
 The published site (GitHub Pages) is in Norwegian; code and docs are in English. See [docs/deploy.md](docs/deploy.md) for deployment.
 
+## Contributing
+
+`main` is protected, so direct pushes are rejected. Work on a short-lived branch and open a pull request to `main`. PRs are squash-merged only (linear history), and the CI check `build-and-test` must pass before merging. Merging to `main` deploys the API and updates GitHub Pages.
+
+```powershell
+git switch -c <topic>
+git commit -am "Describe the change"
+git push -u origin <topic>
+gh pr create --fill
+gh pr merge --squash --auto --delete-branch
+git switch main; git pull
+```
+
 ## Backend
 
 The API lives in `src/` (Aspire 13.6, .NET 10) and stores season data in Azure Table Storage (Azurite locally).

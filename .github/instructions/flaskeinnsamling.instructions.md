@@ -48,7 +48,7 @@ The user always logs in to every site themselves in the Playwright browser. Neve
 - Full names of musicians are OK in the repo and on the published map.
 - English for code, identifiers, code comments, developer docs (README, `docs/`, workflow messages), API error messages and commit messages.
 - Bokmål for all user-facing material: the web pages (index, rodekart, vaktliste, kontakt), the PDF, notices and anything families or musicians see.
-- Published via GitHub Pages from this repo. The user expects **commit + push to `main`** after each completed change.
+- Published via GitHub Pages from this repo. `main` is protected: **never push directly to `main`**. After each completed change, create a short-lived branch (e.g. `<topic>`), commit (English message), push the branch, open a PR with `gh pr create` (English title/body), enable squash auto-merge with `gh pr merge --squash --auto --delete-branch` so it merges once the required check `build-and-test` passes, then switch back to `main` and pull. The published site, PDF and API only update after the merge (merging triggers GitHub Pages and the deploy workflow).
 - Web pages share [theme.css](../../theme.css) (bottle-green theme and side menu). Every page has the same `<nav class="side">` markup, with `aria-current="page"` on its own link. Keep the menu's season and PDF link up to date.
 
 ## After every assignment or reception change
@@ -57,7 +57,7 @@ The user always logs in to every site themselves in the Playwright browser. Neve
 3. Update `assignments` / `reception` in the season file, and [vaktliste.html](../../vaktliste.html) for reception.
 4. Serve the repo locally (`python -m http.server`) and add `?v=<n>` to bypass the cache. Check that `byRode` equals the season file's `assignments`.
 5. Regenerate the PDF: open `rodekart.html?ark`, wait for `window.arkReady`, then `page.pdf` (A4, `preferCSSPageSize`). Reset `emulateMedia` to screen afterwards. Check that there are no broken tiles and that the overview page doesn't overflow.
-6. Commit and push.
+6. Commit on a branch, open a PR and squash-merge it (see Repo conventions). The published map and PDF update only after the merge.
 
 ## Deliverables per season
 - [rodekart.html](../../rodekart.html): a self-contained Leaflet map with embedded `polys` and `byRode`, Kartverket `topograatone` tiles, assigned roder coloured, free roder grey and dashed. Only show free roder between the northern line 2114–2117 and the southern line 2002–2005 (`shownFree`). Every label shows its mailbox count. Show a link to the contact page and Vipps info.

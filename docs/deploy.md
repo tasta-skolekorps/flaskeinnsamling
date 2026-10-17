@@ -8,7 +8,9 @@ The API (the Aspire solution in `src/`) is deployed automatically to **Azure Con
 - Manually from **Actions → Deploy API (Azure) → Run workflow**.
 - Only one deployment runs at a time (`concurrency: deploy-production`). A new deployment waits until the previous one has finished.
 
-When `data/<season>.json` is changed and pushed to `main`, the API re-imports that season on startup, and the file in the repo wins. Changes an admin makes through the API last until the file is changed the next time.
+`main` is protected by a ruleset: changes reach it only through a pull request (squash merge). Merging a PR is the push to `main`, so **deploy runs when a PR is merged to `main`**. Every PR to `main` runs the workflow [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) ("CI"), whose job `build-and-test` (actionlint, `dotnet build` and `dotnet test` of `Flaskeinnsamling.slnx`, including the Aspire integration tests against Azurite in Docker) is a **required status check**. A PR cannot be merged until it passes.
+
+When `data/<season>.json` is changed and merged to `main`, the API re-imports that season on startup, and the file in the repo wins. Changes an admin makes through the API last until the file is changed the next time.
 
 The workflow signs in to Azure with **OIDC (federated credentials)**. It uses no long-lived Azure passwords or keys. It then runs `aspire deploy --non-interactive`, which builds the API, creates the Azure resources and publishes a new revision.
 
@@ -157,7 +159,7 @@ The variables can also be set on the `production` environment (`--env production
 
 ## First deployment
 
-1. Go to **Actions → Deploy API (Azure) → Run workflow** on `main`, or push a change under `src/`.
+1. Go to **Actions → Deploy API (Azure) → Run workflow** on `main`, or merge a pull request that changes `src/`.
 2. The first run typically takes 5–15 minutes (the registry, environment and storage account are created).
 3. The workflow stops early with a clear error message if a variable or `ADMIN_API_KEY` is missing.
 
@@ -175,7 +177,7 @@ After a successful run, you can find the address here:
 
 The address has the form `https://api.<something>.norwayeast.azurecontainerapps.io`. It does not change on later deployments as long as the resource group and environment are kept.
 
-**Then point the frontend at the API:** set `API_BASE` in [`api.js`](../api.js) to the address (without a trailing `/`), then commit and push to `main`. Until that is done, the pages use the embedded data. CORS is already configured: the AppHost parameter `cors-origins` defaults to `https://tasta-skolekorps.github.io`.
+**Then point the frontend at the API:** set `API_BASE` in [`api.js`](../api.js) to the address (without a trailing `/`), then open a pull request; deploy runs when it is merged to `main`. Until that is done, the pages use the embedded data. CORS is already configured: the AppHost parameter `cors-origins` defaults to `https://tasta-skolekorps.github.io`.
 
 ## Costs
 
