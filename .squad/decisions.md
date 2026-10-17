@@ -16,7 +16,7 @@
 ### 2026-10-17T13:20:00+02:00: Continuous deploy of the API to Azure Container Apps
 **By:** Infra (requested by Leif Bjarte Johansson)
 **What:**
-- Workflow `.github/workflows/deploy.yml` ("Deploy API (Azure)"). Triggers: push to `main` touching `src/**`, `data/**`, `*.sln`, `*.slnx`, `global.json`, `aspire.config.json` or `.github/workflows/deploy.yml`; plus `workflow_dispatch`. Concurrency group `deploy-production` (no cancel-in-progress). Job runs in GitHub environment `production`.
+- Workflow `.github/workflows/deploy.yml` ("Deploy API (Azure)"). Triggers (since 2026-10-17T14:20 `main` only changes via squash-merged PRs, so the push trigger fires on merge): push to `main` touching `src/**`, `data/**`, `*.sln`, `*.slnx`, `global.json`, `aspire.config.json` or `.github/workflows/deploy.yml`; plus `workflow_dispatch`. Concurrency group `deploy-production` (no cancel-in-progress). Job runs in GitHub environment `production`.
 - Auth: `azure/login@v3` with OIDC (`id-token: write`, `contents: read`). Federated credential subject `repo:tasta-skolekorps/flaskeinnsamling:environment:production`.
 - Aspire CLI pinned to **13.6.1** via `https://aspire.dev/install.sh --version 13.6.1` (keep in sync with `Aspire.AppHost.Sdk`/packages in `src/`). Deploy: `aspire deploy --apphost src/Flaskeinnsamling.AppHost/Flaskeinnsamling.AppHost.csproj --environment Production --non-interactive`.
 - GitHub **variables** (repo or `production` env): `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, optional `AZURE_RESOURCE_GROUP` (default `rg-flaskeinnsamling`).
@@ -109,6 +109,11 @@ Also: `ReplaceSeasonAsync` now upserts new rows first, then deletes only stale R
 ### 2026-10-17T13:55:27+02:00: User directive — language
 **By:** Leif Bjarte Johansson (via Copilot)
 **What:** Code, code comments, developer docs (README, docs/, workflow comments/log messages), API error messages and commit messages are written in English. All user-facing material (web pages, PDF, notices, contact/process pages for families) stays in Bokmål.
+**Why:** User request — captured for team memory
+
+### 2026-10-17T14:11:16+02:00: User directive — PR-based workflow
+**By:** Leif Bjarte Johansson (via Copilot)
+**What:** `main` is protected by a ruleset (PR required, 0 approvals, squash merge only, linear history). All changes go via a short-lived branch + pull request; the agent squash-merges its own PR once required checks pass, then deletes the branch. Never push directly to `main`. A PR CI workflow (build + tests) is a required status check.
 **Why:** User request — captured for team memory
 
 ## Governance
