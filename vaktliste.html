@@ -29,6 +29,7 @@ p{margin:4px 0}
 <p>Tasta Skolekorps · mottak på <b>Byfjord skole</b> · onsdag kl. 17–21:15</p>
 <p>Seniorkorpset tar imot flasker og bokser, sorterer i Infinitum-sekker og tar imot badgene fra rodene. Vaktene er satt opp etter øvingstidene i Spond.</p>
 
+<div id="reception">
 <h2>Onsdag 21. oktober 2026</h2>
 <div class="slots">
  <div class="slot"><h3>17:00–18:30</h3><ol>
@@ -47,9 +48,38 @@ p{margin:4px 0}
 
 <h2>Onsdag 19. mai 2027</h2>
 <p class="muted">Vaktlisten kommer.</p>
+</div>
 
 <h2>Kontakt</h2>
-<p>Se <a href="kontakt.html">kontaktsiden</a> · Vipps #87153</p>
+<p>Se <a href="kontakt.html">kontaktsiden</a> · Vipps <span id="vipps">#87153</span></p>
 <p><a href="index.html">Slik foregår innsamlingen</a> · <a href="rodekart.html">Rodekart</a></p>
 </main>
+<script src="api.js"></script>
+<script>
+// Embedded list above is the fallback; re-render from the API's `reception` when available.
+flaskeApi.loadSeason().then(doc => {
+  if (!doc) return;
+  if (typeof doc.vipps === 'string' && doc.vipps) document.getElementById('vipps').textContent = doc.vipps;
+  const reception = doc.reception;
+  if (!flaskeApi.hasEntries(reception)) return;
+  const isDate = d => /^\d{4}-\d{2}-\d{2}$/.test(d);
+  const collections = Array.isArray(doc.collections) ? doc.collections.filter(isDate) : [];
+  const dates = [...new Set([...collections, ...Object.keys(reception).filter(isDate)])].sort();
+  const fmtDate = d => {
+    const s = new Date(d + 'T12:00').toLocaleDateString('nb-NO', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'});
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  };
+  const esc = flaskeApi.esc;
+  document.getElementById('reception').innerHTML = dates.map(d => {
+    const slots = Object.entries(reception[d] || {}).filter(([, names]) => Array.isArray(names) && names.length)
+      .sort(([a], [b]) => a.localeCompare(b));
+    const body = slots.length
+      ? '<div class="slots">' + slots.map(([slot, names]) =>
+          '<div class="slot"><h3>' + esc(slot.replace('-', '–')) + '</h3><ol>' +
+          names.map(n => '<li>' + esc(n) + '</li>').join('') + '</ol></div>').join('') + '</div>'
+      : '<p class="muted">Vaktlisten kommer.</p>';
+    return '<h2>' + fmtDate(d) + '</h2>' + body;
+  }).join('');
+}).catch(e => console.warn('flaskeApi: using embedded data', e));
+</script>
 </body></html>

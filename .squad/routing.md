@@ -6,6 +6,11 @@ How to decide who handles what.
 
 | Work Type | Route To | Examples |
 |-----------|----------|----------|
+| Architecture, scope, code review | Lead | Solution layout, API shape, PR review |
+| API, Aspire AppHost, Table Storage | Backend | Endpoints, seeding, admin key |
+| HTML pages, map, PDF, theme | Frontend | rodekart.html, vaktliste.html, API fetch |
+| CI/CD, Azure deploy | Infra | GitHub Actions, `aspire deploy`, OIDC |
+| Tests and quality | Tester | Integration tests against Azurite |
 
 Preset installation adds concrete routes for the configured team. Add or edit rows
 here only when their agent names also exist in the casting registry.

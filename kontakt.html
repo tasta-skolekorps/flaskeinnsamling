@@ -23,7 +23,7 @@ h2{font-size:18px;margin:22px 0 6px;padding-bottom:3px}
 <p>Flaskekomiteen i Tasta Skolekorps organiserer flaskeinnsamlingen. Ta gjerne kontakt med en av oss i Spond hvis du har spørsmål.</p>
 
 <h2>Flaskekomiteen 2026-27</h2>
-<ul>
+<ul id="contacts">
   <li>Albert Idsøe</li>
   <li>Ann-Iren Hoem</li>
   <li>Cathrine Barked</li>
@@ -37,7 +37,18 @@ h2{font-size:18px;margin:22px 0 6px;padding-bottom:3px}
 
 <h2>Vipps</h2>
 <div class="box">
- <p><b>Vipps:</b> #87153 (Tasta Skolekorps)</p>
+ <p><b>Vipps:</b> <span id="vipps">#87153</span> (Tasta Skolekorps)</p>
 </div>
 </main>
+<script src="api.js"></script>
+<script>
+// Embedded list above is the fallback; replace it with API data when available.
+flaskeApi.loadSeason().then(doc => {
+  if (!doc) return;
+  const names = Array.isArray(doc.contacts)
+    ? doc.contacts.map(c => typeof c === 'string' ? c : c && c.name).filter(Boolean) : [];
+  if (names.length) document.getElementById('contacts').innerHTML = names.map(n => '<li>' + flaskeApi.esc(n) + '</li>').join('');
+  if (typeof doc.vipps === 'string' && doc.vipps) document.getElementById('vipps').textContent = doc.vipps;
+}).catch(e => console.warn('flaskeApi: using embedded data', e));
+</script>
 </body></html>

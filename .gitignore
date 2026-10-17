@@ -10,3 +10,9 @@
 .squad/.cache/
 # Squad: SubSquad activation file (local to this machine)
 .squad-workstream
+# .NET / Aspire build output
+bin/
+obj/
+.aspire/
+aspire-output/
+*.user

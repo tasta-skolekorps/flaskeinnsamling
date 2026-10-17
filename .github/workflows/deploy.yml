@@ -1,0 +1,147 @@
+name: Deploy API (Azure)
+
+# Kontinuerlig utrulling av Aspire-backenden til Azure Container Apps (norwayeast).
+# Engangsoppsett (Azure-identitet, roller, variabler og hemmeligheter): se docs/deploy.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "data/**"
+      - "*.sln"
+      - "*.slnx"
+      - "global.json"
+      - "aspire.config.json"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: aspire deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment:
+      name: production
+      url: ${{ steps.api-url.outputs.url }}
+    env:
+      ASPIRE_VERSION: "13.6.1"
+      APPHOST: src/Flaskeinnsamling.AppHost/Flaskeinnsamling.AppHost.csproj
+      AZURE_LOCATION: norwayeast
+      AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'rg-flaskeinnsamling' }}
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "true"
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
+      ASPIRE_CLI_TELEMETRY_OPTOUT: "true"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup .NET (global.json)
+        if: ${{ hashFiles('global.json') != '' }}
+        uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Setup .NET 10
+        if: ${{ hashFiles('global.json') == '' }}
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install Aspire CLI ${{ env.ASPIRE_VERSION }}
+        run: |
+          set -euo pipefail
+          curl -sSL https://aspire.dev/install.sh | bash -s -- --version "$ASPIRE_VERSION"
+          echo "$HOME/.aspire/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Aspire CLI
+        run: aspire --version
+
+      - name: Check required configuration
+        env:
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          HAS_ADMIN_API_KEY: ${{ secrets.ADMIN_API_KEY != '' }}
+        run: |
+          missing=0
+          for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Repo-/miljøvariabelen $name mangler. Se docs/deploy.md."
+              missing=1
+            fi
+          done
+          if [ "$HAS_ADMIN_API_KEY" != "true" ]; then
+            echo "::error::Hemmeligheten ADMIN_API_KEY mangler. Se docs/deploy.md."
+            missing=1
+          fi
+          exit "$missing"
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy with Aspire
+        env:
+          Azure__SubscriptionId: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          Azure__TenantId: ${{ vars.AZURE_TENANT_ID }}
+          Azure__Location: ${{ env.AZURE_LOCATION }}
+          Azure__ResourceGroup: ${{ env.AZURE_RESOURCE_GROUP }}
+          Azure__AllowResourceGroupCreation: "false"
+          Azure__CredentialSource: AzureCli
+          # AppHost parameter "admin-api-key": dashes map to single underscores.
+          Parameters__admin_api_key: ${{ secrets.ADMIN_API_KEY }}
+        run: |
+          set -o pipefail
+          aspire deploy \
+            --apphost "$APPHOST" \
+            --environment Production \
+            --non-interactive \
+            --nologo \
+            2>&1 | tee "$RUNNER_TEMP/aspire-deploy.log"
+
+      - name: Find API URL
+        id: api-url
+        if: ${{ success() }}
+        continue-on-error: true
+        run: |
+          set +e
+          url=""
+          fqdn=$(az resource show \
+            --resource-group "$AZURE_RESOURCE_GROUP" \
+            --resource-type Microsoft.App/containerApps \
+            --name api \
+            --query properties.configuration.ingress.fqdn \
+            --output tsv 2>/dev/null)
+          if [ -n "$fqdn" ]; then
+            url="https://$fqdn"
+          else
+            url=$(grep -oE 'https://api\.[A-Za-z0-9.-]+\.azurecontainerapps\.io' "$RUNNER_TEMP/aspire-deploy.log" | head -n 1)
+          fi
+          dashboard=$(grep -oE 'https://aspire-dashboard\.[A-Za-z0-9.-]+\.azurecontainerapps\.io' "$RUNNER_TEMP/aspire-deploy.log" | head -n 1)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Utrulling til Azure Container Apps"
+            echo ""
+            echo "- Ressursgruppe: \`$AZURE_RESOURCE_GROUP\` ($AZURE_LOCATION)"
+            if [ -n "$url" ]; then
+              echo "- API-URL: <$url>"
+            else
+              echo "- API-URL: fant ikke URL automatisk – se loggen fra «Deploy with Aspire» eller Azure-portalen."
+            fi
+            if [ -n "$dashboard" ]; then
+              echo "- Aspire-dashboard: <$dashboard>"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

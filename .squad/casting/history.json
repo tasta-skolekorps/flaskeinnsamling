@@ -1,4 +1,12 @@
 {
-  "universe_usage_history": [],
-  "assignment_cast_snapshots": {}
+  "universe_usage_history": [
+    { "universe": "descriptive", "assignment_id": "flaskeinnsamling-2026-10-17", "used_at": "2026-10-17T12:33:23+02:00" }
+  ],
+  "assignment_cast_snapshots": {
+    "flaskeinnsamling-2026-10-17": {
+      "universe": "descriptive",
+      "created_at": "2026-10-17T12:33:23+02:00",
+      "agents": ["Lead", "Backend", "Frontend", "Infra", "Tester"]
+    }
+  }
 }

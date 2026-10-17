@@ -1,0 +1,5 @@
+{
+  "appHost": {
+    "path": "src/Flaskeinnsamling.AppHost/Flaskeinnsamling.AppHost.csproj"
+  }
+}
