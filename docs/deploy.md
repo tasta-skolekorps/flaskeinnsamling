@@ -71,14 +71,14 @@ $SP_ID = az ad sp create --id $APP_ID --query id -o tsv
 @{
   name      = "github-flaskeinnsamling-production"
   issuer    = "https://token.actions.githubusercontent.com"
-  subject   = "repo:tasta-skolekorps/flaskeinnsamling:environment:production"
+  subject   = "repo:tasta-skolekorps@334118641/flaskeinnsamling@1388875818:environment:production"
   audiences = @("api://AzureADTokenExchange")
 } | ConvertTo-Json | Set-Content -Encoding utf8 fic.json
 az ad app federated-credential create --id $APP_ID --parameters fic.json
 Remove-Item fic.json
 ```
 
-`subject` must exactly match the repo and the GitHub environment `production`. The federated credential only applies to jobs running in that environment.
+`subject` must exactly match the repo and the GitHub environment `production`. The federated credential only applies to jobs running in that environment. The repo uses GitHub's immutable subject format (`owner@<owner-id>/repo@<repo-id>`), so the plain `repo:tasta-skolekorps/flaskeinnsamling:...` form is rejected with `AADSTS700213`. Check the current prefix with `gh api repos/$REPO/actions/oidc/customization/sub` (`sub_claim_prefix`).
 
 ### 3b. Alternative: user-assigned managed identity
 
@@ -93,7 +93,7 @@ az identity federated-credential create `
   --identity-name "id-github-flaskeinnsamling" `
   --resource-group "github-action-identities" `
   --issuer "https://token.actions.githubusercontent.com" `
-  --subject "repo:tasta-skolekorps/flaskeinnsamling:environment:production" `
+  --subject "repo:tasta-skolekorps@334118641/flaskeinnsamling@1388875818:environment:production" `
   --audiences "api://AzureADTokenExchange"
 ```
 
