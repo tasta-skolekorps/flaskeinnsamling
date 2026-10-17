@@ -51,6 +51,25 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
+      # The AppHost health-checks the API over https://localhost, so the ASP.NET Core dev cert must
+      # be trusted. On Linux, --trust adds it to .NET's CurrentUser\Root store and exports it to
+      # ~/.aspnet/dev-certs/trust; OpenSSL clients only see it via SSL_CERT_DIR.
+      # https://learn.microsoft.com/aspnet/core/security/enforcing-ssl#linux-specific-considerations
+      - name: Trust ASP.NET Core dev certificate
+        run: |
+          set -euo pipefail
+          # Browser (NSS) trust may report a partial failure on the runner; verify the export below.
+          dotnet dev-certs https --trust --verbose || echo "::warning::dotnet dev-certs https --trust reported a partial failure."
+          trust_dir="$HOME/.aspnet/dev-certs/trust"
+          if ! compgen -G "$trust_dir/*" > /dev/null; then
+            echo "::error::No exported dev certificate in $trust_dir."
+            exit 1
+          fi
+          openssl_dir=$(openssl version -d | sed -E 's/^OPENSSLDIR: "(.*)"$/\1/')
+          ssl_cert_dir="$trust_dir:$openssl_dir/certs"
+          echo "SSL_CERT_DIR=$ssl_cert_dir" >> "$GITHUB_ENV"
+          SSL_CERT_DIR="$ssl_cert_dir" dotnet dev-certs https --check --trust || echo "::warning::dev cert trust check did not report full trust."
+
       - name: Build
         run: dotnet build "$SOLUTION" -c Release
 
