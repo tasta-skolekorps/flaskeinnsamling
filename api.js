@@ -1,9 +1,9 @@
 // Shared client for the flaskeinnsamling API. Pages render their embedded data first
 // and re-render with API data when (and if) it arrives. Never throws; null means "use fallback".
 (function () {
-  // Set to the deployed API URL (e.g. 'https://<app>.azurecontainerapps.io') after the first deploy.
+  // Deployed API (Azure Container Apps, see docs/deploy.md).
   // Empty = API disabled: pages use only their embedded data and make no network requests.
-  const API_BASE = '';
+  const API_BASE = 'https://api.proudpebble-94a430f0.norwayeast.azurecontainerapps.io';
   const SEASON = '2026-27';
   const TIMEOUT_MS = 4000;
 
