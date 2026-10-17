@@ -19,7 +19,7 @@
 
 - Pages stay on GitHub Pages; API is called cross-origin
 - Keep `?ark` PDF mode working
-- Bokmål for all user-facing text
+- Bokmål for all user-facing text (pages, PDF); English for code, comments and commit messages
 
 ## Boundaries
 

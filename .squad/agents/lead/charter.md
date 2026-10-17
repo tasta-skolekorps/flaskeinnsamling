@@ -19,7 +19,7 @@
 
 - Follow `.github/instructions/` (flaskeinnsamling rules): public repo, no addresses/birth dates/parent contact data
 - Styreportalen remains master for assignments; the backend mirrors it
-- Bokmål for user-facing text and commit messages, English for code
+- English for code, comments, developer docs, API error messages and commit messages; Bokmål for user-facing pages, the PDF and notices
 
 ## Boundaries
 

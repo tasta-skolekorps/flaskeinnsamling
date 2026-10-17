@@ -25,7 +25,7 @@
 - Resource group is pre-created by the user. Deploy identity gets **Contributor** + **Role Based Access Control Administrator** scoped to the resource group (Aspire's bicep creates AcrPull and Storage Blob/Table/Queue Data Contributor role assignments). Resource providers registered once by the user.
 - Deployment state is **not** cached between runs (`~/.aspire/deployments` contains plaintext secrets; public repo). All inputs come from env vars each run.
 - API URL is written to the job summary and the `production` environment URL (via `az resource show … Microsoft.App/containerApps/api`, fallback: grep of deploy log).
-- One-time setup documented in `docs/deploy.md` (Bokmål).
+- One-time setup documented in `docs/deploy.md` (Bokmål). (superseded 2026-10-17: developer docs are now English)
 **Why:** User request — continuous deploy with OIDC, no long-lived Azure secrets, lowest-cost scale-to-zero hosting in norwayeast.
 
 ### 2026-10-17T13:40:00+02:00: Backend API contract
@@ -105,6 +105,11 @@ Also: `ReplaceSeasonAsync` now upserts new rows first, then deletes only stale R
 - Season-equality tests compare the API with `data/<season>.json` (copied into the test output). If someone edits the season file, the seed and the test stay in sync automatically.
 - Coverage: seed equality (collections, contacts, vipps, housing, korps, assignments, reception), 400/401/404, assignment + reception round-trip and `[]` delete (incl. `%3A` slots), name normalization and limits, full-season import drops unknown fields (address, birth date, parent contacts, musicians), full-season replace removes old rows, CORS preflight and simple GET (GitHub Pages allowed, others not, DELETE not allowed).
 **Why:** Writes are admin-only and data is public; these tests lock in the contract in `backend-api-contract.md` against a real Azurite, not mocks.
+
+### 2026-10-17T13:55:27+02:00: User directive — language
+**By:** Leif Bjarte Johansson (via Copilot)
+**What:** Code, code comments, developer docs (README, docs/, workflow comments/log messages), API error messages and commit messages are written in English. All user-facing material (web pages, PDF, notices, contact/process pages for families) stays in Bokmål.
+**Why:** User request — captured for team memory
 
 ## Governance
 

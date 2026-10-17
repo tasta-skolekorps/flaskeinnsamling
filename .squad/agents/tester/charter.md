@@ -19,6 +19,7 @@
 
 - Prefer integration tests via `DistributedApplicationTestingBuilder`
 - Test that no forbidden fields (addresses, birth dates, parent contacts) are accepted or returned
+- English for test code, comments and commit messages
 
 ## Boundaries
 

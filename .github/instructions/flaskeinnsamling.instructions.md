@@ -46,7 +46,8 @@ The user always logs in to every site themselves in the Playwright browser. Neve
 - The repo is **public**. Full names are OK, but **don't commit home addresses, birth dates or parent contact info**. Use them only in memory for matching.
 - 2026-27 collection dates: 2026-10-21, 2027-01-06, 2027-05-19. Contacts: the flaskekomité in the season file's `contacts`. Vipps: #87153. For later seasons, read these values from the season file.
 - Full names of musicians are OK in the repo and on the published map.
-- Bokmål for all user-facing text and commit messages. English for code and identifiers.
+- English for code, identifiers, code comments, developer docs (README, `docs/`, workflow messages), API error messages and commit messages.
+- Bokmål for all user-facing material: the web pages (index, rodekart, vaktliste, kontakt), the PDF, notices and anything families or musicians see.
 - Published via GitHub Pages from this repo. The user expects **commit + push to `main`** after each completed change.
 - Web pages share [theme.css](../../theme.css) (bottle-green theme and side menu). Every page has the same `<nav class="side">` markup, with `aria-current="page"` on its own link. Keep the menu's season and PDF link up to date.
 

@@ -21,6 +21,7 @@
 - Use `aspire` CLI (`aspire start`, `aspire add`, `aspire docs search`) — never `dotnet run` on the AppHost
 - Azurite emulator locally via `RunAsEmulator()`
 - Never store addresses, birth dates or parent contact info — names only
+- English for code, comments, API error messages and commit messages
 
 ## Boundaries
 

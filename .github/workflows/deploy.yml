@@ -1,7 +1,7 @@
 name: Deploy API (Azure)
 
-# Kontinuerlig utrulling av Aspire-backenden til Azure Container Apps (norwayeast).
-# Engangsoppsett (Azure-identitet, roller, variabler og hemmeligheter): se docs/deploy.md.
+# Continuous deployment of the Aspire backend to Azure Container Apps (norwayeast).
+# One-time setup (Azure identity, roles, variables and secrets): see docs/deploy.md.
 
 on:
   push:
@@ -76,12 +76,12 @@ jobs:
           missing=0
           for name in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
             if [ -z "${!name}" ]; then
-              echo "::error::Repo-/miljøvariabelen $name mangler. Se docs/deploy.md."
+              echo "::error::Repository/environment variable $name is missing. See docs/deploy.md."
               missing=1
             fi
           done
           if [ "$HAS_ADMIN_API_KEY" != "true" ]; then
-            echo "::error::Hemmeligheten ADMIN_API_KEY mangler. Se docs/deploy.md."
+            echo "::error::Secret ADMIN_API_KEY is missing. See docs/deploy.md."
             missing=1
           fi
           exit "$missing"
@@ -130,18 +130,14 @@ jobs:
           else
             url=$(grep -oE 'https://api\.[A-Za-z0-9.-]+\.azurecontainerapps\.io' "$RUNNER_TEMP/aspire-deploy.log" | head -n 1)
           fi
-          dashboard=$(grep -oE 'https://aspire-dashboard\.[A-Za-z0-9.-]+\.azurecontainerapps\.io' "$RUNNER_TEMP/aspire-deploy.log" | head -n 1)
           echo "url=$url" >> "$GITHUB_OUTPUT"
           {
-            echo "## Utrulling til Azure Container Apps"
+            echo "## Deployment to Azure Container Apps"
             echo ""
-            echo "- Ressursgruppe: \`$AZURE_RESOURCE_GROUP\` ($AZURE_LOCATION)"
+            echo "- Resource group: \`$AZURE_RESOURCE_GROUP\` ($AZURE_LOCATION)"
             if [ -n "$url" ]; then
-              echo "- API-URL: <$url>"
+              echo "- API URL: <$url>"
             else
-              echo "- API-URL: fant ikke URL automatisk – se loggen fra «Deploy with Aspire» eller Azure-portalen."
-            fi
-            if [ -n "$dashboard" ]; then
-              echo "- Aspire-dashboard: <$dashboard>"
+              echo "- API URL: could not be determined automatically; see the \"Deploy with Aspire\" log or the Azure portal."
             fi
           } >> "$GITHUB_STEP_SUMMARY"

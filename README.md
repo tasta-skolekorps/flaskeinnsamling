@@ -1,36 +1,39 @@
 # flaskeinnsamling
+
+The published site (GitHub Pages) is in Norwegian; code and docs are in English. See [docs/deploy.md](docs/deploy.md) for deployment.
+
 ## Backend
 
-API-et ligger i `src/` (Aspire 13.6, .NET 10) og lagrer sesongdata i Azure Table Storage (Azurite lokalt).
+The API lives in `src/` (Aspire 13.6, .NET 10) and stores season data in Azure Table Storage (Azurite locally).
 
-- `src/Flaskeinnsamling.AppHost` – Aspire AppHost (ressursen heter `api`)
+- `src/Flaskeinnsamling.AppHost` – Aspire AppHost (the resource is named `api`)
 - `src/Flaskeinnsamling.Api` – minimal API
-- `src/Flaskeinnsamling.ServiceDefaults` – felles helsesjekk/telemetri
+- `src/Flaskeinnsamling.ServiceDefaults` – shared health checks/telemetry
 
-### Kjøre lokalt
+### Run locally
 
-Krever .NET 10 SDK, Aspire CLI og Docker (for Azurite).
+Requires the .NET 10 SDK, the Aspire CLI and Docker (for Azurite).
 
 ```powershell
-# Engangsoppsett: lokal admin-nøkkel (velg en egen verdi, aldri commit den)
-dotnet user-secrets set "Parameters:admin-api-key" "<lokal-nøkkel>" --project src/Flaskeinnsamling.AppHost
+# One-time setup: local admin key (pick your own value, never commit it)
+dotnet user-secrets set "Parameters:admin-api-key" "<local-key>" --project src/Flaskeinnsamling.AppHost
 aspire start
 aspire wait api
 aspire stop
 ```
 
-Ved oppstart lages tabellene, og hver `data/<sesong>.json` importeres hvis sesongen mangler eller filens SHA-256 avviker fra `SeedHash` lagret på sesongen – en endret fil i repoet vinner altså, slik repoet speiler Styreportalen. Admin-endringer via API-et beholder lagret `SeedHash`, så de overlever omstart helt til fila i repoet endres.
+On startup the tables are created, and each `data/<season>.json` is imported if the season is missing or the file's SHA-256 differs from the `SeedHash` stored on the season. A changed file in the repo therefore wins, so the repo mirrors Styreportalen. Admin changes made through the API keep the stored `SeedHash`, so they survive restarts until the repo file changes.
 
-### Endepunkter
+### Endpoints
 
-| Metode | Sti | Beskrivelse |
+| Method | Path | Description |
 | --- | --- | --- |
-| GET | `/api/seasons` | Liste over sesonger, f.eks. `["2026-27"]` |
-| GET | `/api/seasons/{season}` | Hele sesongen i samme format som `data/<sesong>.json` |
-| PUT | `/api/seasons/{season}` | Erstatter hele sesongen (import). Admin |
-| GET | `/api/seasons/{season}/assignments` | `{"2001": ["Navn"]}` |
-| PUT | `/api/seasons/{season}/assignments/{rode}` | Body `["Navn"]`; tom liste sletter. Admin |
-| GET | `/api/seasons/{season}/reception` | `{"2026-10-21": {"17:00-18:30": ["Navn"]}}` |
-| PUT | `/api/seasons/{season}/reception/{date}/{slot}` | Body `["Navn"]`; tom liste sletter. Admin |
+| GET | `/api/seasons` | List of seasons, e.g. `["2026-27"]` |
+| GET | `/api/seasons/{season}` | The whole season in the same format as `data/<season>.json` |
+| PUT | `/api/seasons/{season}` | Replaces the whole season (import). Admin |
+| GET | `/api/seasons/{season}/assignments` | `{"2001": ["Name"]}` |
+| PUT | `/api/seasons/{season}/assignments/{rode}` | Body `["Name"]`; an empty list deletes. Admin |
+| GET | `/api/seasons/{season}/reception` | `{"2026-10-21": {"17:00-18:30": ["Name"]}}` |
+| PUT | `/api/seasons/{season}/reception/{date}/{slot}` | Body `["Name"]`; an empty list deletes. Admin |
 
-Admin-kall krever headeren `X-Admin-Key`. Uten gyldig nøkkel svarer API-et `401`. Bare navn lagres; adresser, fødselsdatoer og foreldreinfo forkastes.
+Admin calls require the `X-Admin-Key` header. Without a valid key the API returns `401`. Only names are stored; addresses, birth dates and parent info are discarded.

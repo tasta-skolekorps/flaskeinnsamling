@@ -1,45 +1,45 @@
-# Utrulling av API-et til Azure
+# Deploying the API to Azure
 
-API-et (Aspire-løsningen i `src/`) rulles ut automatisk til **Azure Container Apps** i regionen **Norway East** (`norwayeast`) av GitHub Actions-arbeidsflyten [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml). De statiske sidene ligger fortsatt på GitHub Pages og påvirkes ikke.
+The API (the Aspire solution in `src/`) is deployed automatically to **Azure Container Apps** in the **Norway East** region (`norwayeast`) by the GitHub Actions workflow [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml). The static pages remain on GitHub Pages and are not affected.
 
-## Når kjører utrullingen?
+## When does the deployment run?
 
-- Ved hver push til `main` som endrer `src/**`, `data/**`, løsningsfilen (`*.sln`/`*.slnx`), `global.json`, `aspire.config.json` eller selve `deploy.yml`.
-- Manuelt fra **Actions → Deploy API (Azure) → Run workflow**.
-- Bare én utrulling kjører om gangen (`concurrency: deploy-production`). En ny utrulling venter til den forrige er ferdig.
+- On every push to `main` that changes `src/**`, `data/**`, the solution file (`*.sln`/`*.slnx`), `global.json`, `aspire.config.json` or `deploy.yml` itself.
+- Manually from **Actions → Deploy API (Azure) → Run workflow**.
+- Only one deployment runs at a time (`concurrency: deploy-production`). A new deployment waits until the previous one has finished.
 
-Når `data/<sesong>.json` endres og pushes til `main`, importerer API-et den sesongen på nytt ved oppstart, og filen i repoet vinner. Endringer som admin gjør gjennom API-et, gjelder til filen endres neste gang.
+When `data/<season>.json` is changed and pushed to `main`, the API re-imports that season on startup, and the file in the repo wins. Changes an admin makes through the API last until the file is changed the next time.
 
-Arbeidsflyten logger inn i Azure med **OIDC (føderert legitimasjon)**. Den bruker ingen langlivede Azure-passord eller -nøkler. Deretter kjører den `aspire deploy --non-interactive`, som bygger API-et, lager Azure-ressursene og publiserer en ny versjon.
+The workflow signs in to Azure with **OIDC (federated credentials)**. It uses no long-lived Azure passwords or keys. It then runs `aspire deploy --non-interactive`, which builds the API, creates the Azure resources and publishes a new revision.
 
-## Det Aspire lager i Azure
+## What Aspire creates in Azure
 
-Alt havner i én ressursgruppe (standard `rg-flaskeinnsamling`):
+Everything goes into one resource group (default `rg-flaskeinnsamling`):
 
-- Container Apps-miljø med Log Analytics-arbeidsområde (uten Aspire-dashboard i Azure, for å holde kostnadene nede; bruk Log Analytics til logger)
-- Container App `api` med offentlig HTTPS-adresse (0–1 replika, skalerer til null)
-- Azure Container Registry (Basic) for containerbildene
-- To brukertildelte administrerte identiteter (managed identity): én for å hente bilder fra registeret og én for API-ets tilgang til lagringskontoen
-- Lagringskonto (Standard_LRS) med Table Storage (`tables`)
-- **Rolletildelinger:** AcrPull på registeret, og Storage Table Data Contributor på lagringskontoen for API-ets identitet
+- Container Apps environment with a Log Analytics workspace (no Aspire dashboard in Azure, to keep costs down; use Log Analytics for logs)
+- Container App `api` with a public HTTPS address (0–1 replicas, scales to zero)
+- Azure Container Registry (Basic) for the container images
+- Two user-assigned managed identities: one for pulling images from the registry and one for the API's access to the storage account
+- Storage account (Standard_LRS) with Table Storage (`tables`)
+- **Role assignments:** AcrPull on the registry, and Storage Table Data Contributor on the storage account for the API's identity
 
-Fordi Aspire oppretter rolletildelinger, er rollen *Contributor* ikke nok for identiteten som ruller ut. Den trenger i tillegg en rolle som kan tildele roller (se steg 4).
+Because Aspire creates role assignments, the *Contributor* role is not enough for the deploying identity. It also needs a role that can assign roles (see step 4).
 
-## Engangsoppsett
+## One-time setup
 
-Du kjører kommandoene selv i PowerShell med `az` (Azure CLI) og `gh` (GitHub CLI). Bytt ut alt i `<…>` med dine egne verdier. **Ikke** lim inn ID-er, nøkler eller passord i repoet, i issues eller i chat.
+You run the commands yourself in PowerShell with `az` (Azure CLI) and `gh` (GitHub CLI). Replace everything in `<…>` with your own values. Do **not** paste IDs, keys or passwords into the repo, issues or chat.
 
-Du trenger:
+You need:
 
-- *Owner* (eller *Contributor* + *User Access Administrator*) på abonnementet, så du kan opprette ressursgruppen og rolletildelinger.
-- Rett til å opprette app-registreringer i Microsoft Entra ID (standard for vanlige brukere i de fleste tenanter). Har du ikke det, bruk alternativet med administrert identitet i steg 3b.
-- Admin-tilgang til GitHub-repoet `tasta-skolekorps/flaskeinnsamling`.
+- *Owner* (or *Contributor* + *User Access Administrator*) on the subscription, so you can create the resource group and role assignments.
+- Permission to create app registrations in Microsoft Entra ID (the default for regular users in most tenants). If you don't have it, use the managed identity alternative in step 3b.
+- Admin access to the GitHub repo `tasta-skolekorps/flaskeinnsamling`.
 
-### 1. Logg inn og velg abonnement
+### 1. Sign in and select the subscription
 
 ```powershell
 az login
-$SUBSCRIPTION_ID = "<abonnement-id>"
+$SUBSCRIPTION_ID = "<subscription-id>"
 az account set --subscription $SUBSCRIPTION_ID
 $TENANT_ID = az account show --query tenantId -o tsv
 $RG = "rg-flaskeinnsamling"
@@ -47,9 +47,9 @@ $LOCATION = "norwayeast"
 $REPO = "tasta-skolekorps/flaskeinnsamling"
 ```
 
-### 2. Registrer ressursleverandører og opprett ressursgruppen
+### 2. Register resource providers and create the resource group
 
-Identiteten får bare rettigheter på ressursgruppen, så leverandørene må registreres én gang på forhånd:
+The identity only gets permissions on the resource group, so the providers must be registered once in advance:
 
 ```powershell
 foreach ($ns in "Microsoft.App", "Microsoft.ContainerRegistry", "Microsoft.OperationalInsights", "Microsoft.ManagedIdentity", "Microsoft.Storage") {
@@ -58,9 +58,9 @@ foreach ($ns in "Microsoft.App", "Microsoft.ContainerRegistry", "Microsoft.Opera
 az group create --name $RG --location $LOCATION
 ```
 
-Arbeidsflyten setter `Azure__AllowResourceGroupCreation=false`, så ressursgruppen **må** finnes før første utrulling.
+The workflow sets `Azure__AllowResourceGroupCreation=false`, so the resource group **must** exist before the first deployment.
 
-### 3a. Opprett app-registrering med føderert legitimasjon (anbefalt)
+### 3a. Create an app registration with a federated credential (recommended)
 
 ```powershell
 $APP_ID = az ad app create --display-name "github-flaskeinnsamling-deploy" --query appId -o tsv
@@ -76,11 +76,11 @@ az ad app federated-credential create --id $APP_ID --parameters fic.json
 Remove-Item fic.json
 ```
 
-`subject` må samsvare nøyaktig med repoet og GitHub-miljøet `production`. Den føderte legitimasjonen gjelder bare jobber som kjører i det miljøet.
+`subject` must exactly match the repo and the GitHub environment `production`. The federated credential only applies to jobs running in that environment.
 
-### 3b. Alternativ: brukertildelt administrert identitet
+### 3b. Alternative: user-assigned managed identity
 
-Bruk dette hvis du ikke kan opprette app-registreringer. Legg identiteten i en **egen** ressursgruppe, så den ikke slettes hvis du river ned `rg-flaskeinnsamling` med `aspire destroy`.
+Use this if you cannot create app registrations. Put the identity in a **separate** resource group so it is not deleted if you tear down `rg-flaskeinnsamling` with `aspire destroy`.
 
 ```powershell
 az group create --name "rg-flaskeinnsamling-ci" --location $LOCATION
@@ -95,7 +95,7 @@ az identity federated-credential create `
   --audiences "api://AzureADTokenExchange"
 ```
 
-### 4. Gi identiteten roller på ressursgruppen
+### 4. Grant the identity roles on the resource group
 
 ```powershell
 $SCOPE = "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RG"
@@ -103,92 +103,92 @@ az role assignment create --assignee-object-id $SP_ID --assignee-principal-type 
 az role assignment create --assignee-object-id $SP_ID --assignee-principal-type ServicePrincipal --role "Role Based Access Control Administrator" --scope $SCOPE
 ```
 
-- **Contributor** lar Aspire opprette og oppdatere ressursene.
-- **Role Based Access Control Administrator** lar Aspire opprette rolletildelingene for de administrerte identitetene (AcrPull og Storage Table Data Contributor). *User Access Administrator* fungerer også, men gir mer enn nødvendig.
-- Rollene gjelder **bare** ressursgruppen, ikke hele abonnementet.
+- **Contributor** lets Aspire create and update the resources.
+- **Role Based Access Control Administrator** lets Aspire create the role assignments for the managed identities (AcrPull and Storage Table Data Contributor). *User Access Administrator* also works, but grants more than needed.
+- The roles apply **only** to the resource group, not the whole subscription.
 
-Rolletildelinger kan bruke noen minutter på å slå gjennom. Feiler første utrulling med `AuthorizationFailed`, venter du litt og kjører den på nytt.
+Role assignments can take a few minutes to propagate. If the first deployment fails with `AuthorizationFailed`, wait a bit and run it again.
 
-### 5. Opprett GitHub-miljøet `production`
+### 5. Create the GitHub environment `production`
 
 ```powershell
 gh api --method PUT "repos/$REPO/environments/production"
 ```
 
-Anbefalt: tillat bare utrulling fra `main`.
+Recommended: allow deployments from `main` only.
 
 ```powershell
 gh api --method PUT "repos/$REPO/environments/production" -F "deployment_branch_policy[protected_branches]=false" -F "deployment_branch_policy[custom_branch_policies]=true"
 gh api --method POST "repos/$REPO/environments/production/deployment-branch-policies" -f name=main
 ```
 
-Vil du godkjenne hver utrulling manuelt, legger du til deg selv som *Required reviewer* under **Settings → Environments → production**.
+To approve each deployment manually, add yourself as a *Required reviewer* under **Settings → Environments → production**.
 
-### 6. Legg inn variabler og hemmelighet i GitHub
+### 6. Add variables and the secret in GitHub
 
-Variabler (ikke hemmelige, men hold dem utenfor koden):
+Variables (not secret, but keep them out of the code):
 
 ```powershell
 gh variable set AZURE_CLIENT_ID --repo $REPO --body $APP_ID
 gh variable set AZURE_TENANT_ID --repo $REPO --body $TENANT_ID
 gh variable set AZURE_SUBSCRIPTION_ID --repo $REPO --body $SUBSCRIPTION_ID
-gh variable set AZURE_RESOURCE_GROUP --repo $REPO --body $RG   # valgfri, standard er rg-flaskeinnsamling
+gh variable set AZURE_RESOURCE_GROUP --repo $REPO --body $RG   # optional, defaults to rg-flaskeinnsamling
 ```
 
-Hemmelighet for admin-API-et (`admin-api-key` i AppHost). Lag en sterk nøkkel, legg den i passordbehandleren til flaskekomiteen og registrer den som miljøhemmelighet. `gh` spør etter verdien, så den havner ikke i kommandohistorikken:
+Secret for the admin API (`admin-api-key` in the AppHost). Generate a strong key, store it in the flaskekomité's password manager and register it as an environment secret. `gh` prompts for the value, so it does not end up in your command history:
 
 ```powershell
 [Convert]::ToBase64String([Security.Cryptography.RandomNumberGenerator]::GetBytes(32)) | Set-Clipboard
-# Lim nøkkelen inn i passordbehandleren først, deretter:
+# Paste the key into the password manager first, then:
 gh secret set ADMIN_API_KEY --repo $REPO --env production
-# Lim inn nøkkelen når du blir spurt, og tøm utklippstavlen etterpå:
+# Paste the key when prompted, then clear the clipboard:
 Set-Clipboard -Value " "
 ```
 
-| Navn | Type | Innhold |
+| Name | Type | Contents |
 |---|---|---|
-| `AZURE_CLIENT_ID` | variabel | Client-ID til app-registreringen/identiteten |
-| `AZURE_TENANT_ID` | variabel | Tenant-ID |
-| `AZURE_SUBSCRIPTION_ID` | variabel | Abonnements-ID |
-| `AZURE_RESOURCE_GROUP` | variabel (valgfri) | Ressursgruppe, standard `rg-flaskeinnsamling` |
-| `ADMIN_API_KEY` | hemmelighet (miljø `production`) | Admin-nøkkel for skrive-API-et |
+| `AZURE_CLIENT_ID` | variable | Client ID of the app registration/identity |
+| `AZURE_TENANT_ID` | variable | Tenant ID |
+| `AZURE_SUBSCRIPTION_ID` | variable | Subscription ID |
+| `AZURE_RESOURCE_GROUP` | variable (optional) | Resource group, default `rg-flaskeinnsamling` |
+| `ADMIN_API_KEY` | secret (environment `production`) | Admin key for the write API |
 
-Variablene kan også ligge på miljøet `production` (`--env production`) i stedet for på repoet. Arbeidsflyten leser `vars.*` begge steder.
+The variables can also be set on the `production` environment (`--env production`) instead of on the repo. The workflow reads `vars.*` from both places.
 
-## Første utrulling
+## First deployment
 
-1. Gå til **Actions → Deploy API (Azure) → Run workflow** på `main`, eller push en endring under `src/`.
-2. Første kjøring tar typisk 5–15 minutter (registeret, miljøet og lagringskontoen opprettes).
-3. Arbeidsflyten stopper tidlig med en tydelig feilmelding hvis en variabel eller `ADMIN_API_KEY` mangler.
+1. Go to **Actions → Deploy API (Azure) → Run workflow** on `main`, or push a change under `src/`.
+2. The first run typically takes 5–15 minutes (the registry, environment and storage account are created).
+3. The workflow stops early with a clear error message if a variable or `ADMIN_API_KEY` is missing.
 
-## Finn API-adressen
+## Find the API address
 
-Etter en vellykket kjøring finner du adressen her:
+After a successful run, you can find the address here:
 
-- **Jobbsammendraget** (Summary) til kjøringen viser «API-URL».
-- **Deployments / Environments → production** i repoet viser samme URL.
-- Med Azure CLI:
+- The run's **job summary** (Summary) shows "API URL".
+- **Deployments / Environments → production** in the repo shows the same URL.
+- With Azure CLI:
 
   ```powershell
   az resource show --resource-group rg-flaskeinnsamling --resource-type Microsoft.App/containerApps --name api --query properties.configuration.ingress.fqdn -o tsv
   ```
 
-Adressen har formen `https://api.<noe>.norwayeast.azurecontainerapps.io`. Den endrer seg ikke ved senere utrullinger så lenge ressursgruppen og miljøet beholdes.
+The address has the form `https://api.<something>.norwayeast.azurecontainerapps.io`. It does not change on later deployments as long as the resource group and environment are kept.
 
-**Deretter må frontenden peke på API-et:** sett `API_BASE` i [`api.js`](../api.js) til adressen (uten avsluttende `/`), og commit og push til `main`. Til det blir gjort, bruker sidene de innebygde dataene. CORS er allerede satt opp: AppHost-parameteren `cors-origins` har `https://tasta-skolekorps.github.io` som standardverdi.
+**Then point the frontend at the API:** set `API_BASE` in [`api.js`](../api.js) to the address (without a trailing `/`), then commit and push to `main`. Until that is done, the pages use the embedded data. CORS is already configured: the AppHost parameter `cors-origins` defaults to `https://tasta-skolekorps.github.io`.
 
-## Kostnader
+## Costs
 
-- **Azure Container Apps (Consumption):** API-et skalerer til null når det ikke brukes, og den månedlige gratiskvoten (vCPU-sekunder, GiB-sekunder og 2 millioner forespørsler) dekker normalt et lite korps. Forvent kald start på noen sekunder etter en periode uten trafikk.
-- **Lagringskonto (Table Storage):** noen få kroner i måneden for så små datamengder.
-- **Azure Container Registry (Basic):** den største faste kostnaden, ca. 5 USD per måned.
-- **Log Analytics:** betaling per GB innsamlet logg. Lite volum gir svært lav kostnad.
+- **Azure Container Apps (Consumption):** the API scales to zero when idle, and the monthly free grant (vCPU-seconds, GiB-seconds and 2 million requests) normally covers a small band. Expect a cold start of a few seconds after a period without traffic.
+- **Storage account (Table Storage):** a few kroner per month for such small amounts of data.
+- **Azure Container Registry (Basic):** the largest fixed cost, about USD 5 per month.
+- **Log Analytics:** pay per GB of ingested logs. Low volume means very low cost.
 
-Sett gjerne opp et budsjettvarsel på ressursgruppen under **Cost Management → Budgets** i Azure-portalen.
+Consider setting up a budget alert on the resource group under **Cost Management → Budgets** in the Azure portal.
 
-## Drift og vedlikehold
+## Operations and maintenance
 
-- **Bytte admin-nøkkel:** kjør `gh secret set ADMIN_API_KEY --repo tasta-skolekorps/flaskeinnsamling --env production` på nytt, og start arbeidsflyten manuelt.
-- **Feilsøking:** loggen fra steget «Deploy with Aspire» viser hvert Aspire-steg. I Azure: `az containerapp logs show --resource-group rg-flaskeinnsamling --name api --tail 100` (krever `az extension add --name containerapp`).
-- **Rive ned alt:** kjør `aspire destroy` lokalt etter `az login`. Kommandoen sletter **hele** ressursgruppen. App-registreringen, eller identiteten i `rg-flaskeinnsamling-ci`, blir liggende.
-- **Oppgradere Aspire:** oppdater `ASPIRE_VERSION` i `deploy.yml` samtidig med Aspire-pakkene i `src/`.
+- **Rotate the admin key:** run `gh secret set ADMIN_API_KEY --repo tasta-skolekorps/flaskeinnsamling --env production` again, then start the workflow manually.
+- **Troubleshooting:** the log from the "Deploy with Aspire" step shows each Aspire step. In Azure: `az containerapp logs show --resource-group rg-flaskeinnsamling --name api --tail 100` (requires `az extension add --name containerapp`).
+- **Tear everything down:** run `aspire destroy` locally after `az login`. The command deletes the **entire** resource group. The app registration, or the identity in `rg-flaskeinnsamling-ci`, is left in place.
+- **Upgrade Aspire:** update `ASPIRE_VERSION` in `deploy.yml` together with the Aspire packages in `src/`.

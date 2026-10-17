@@ -9,3 +9,4 @@
 
 <!-- Append new learnings below. Each entry is something lasting about the project. -->
 - 2026-10-17T13:40:00+02:00: `api.js` exposes `window.flaskeApi`; the API origin is the `API_BASE` constant at the top of `api.js` (`''` = API disabled until the first ACA deploy). `?api=` override only for loopback. Pages render embedded data first; empty API objects mean "not seeded". `?ark` waits for API or ~4 s timeout before `window.arkReady`.
+- 2026-10-17T14:05:00+02:00: Language rule (user directive): code, comments, developer docs (README, docs/, workflow comments/log messages), API error messages and commit messages in English; all user-facing material (web pages, PDF, notices, family pages) in Bokmål.

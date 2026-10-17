@@ -20,6 +20,7 @@
 - Never handle, print or commit credentials; use GitHub OIDC + repo variables/secrets
 - Keep Squad workflows untouched
 - Prefer scale-to-zero, lowest-cost SKUs
+- English for workflows, setup docs and commit messages
 
 ## Boundaries
 
