@@ -24,7 +24,7 @@ The app's resources go into one resource group (default `rg-flaskeinnsamling`):
 - Storage account (Standard_LRS) with Table Storage (`tables`)
 - **Role assignments:** AcrPull on the registry, and Storage Table Data Contributor on the storage account for the API's identity
 
-Aspire does **not** create a registry. It uses the existing shared Azure Container Registry `leifssharedacr` (Basic) in the resource group `rg-common` (see `AppHost.cs` and step 2b). The AcrPull assignment is created on that registry.
+Aspire does **not** create a registry. It uses the existing shared Azure Container Registry `leifssharedacr` (Basic) in the resource group `rg-common` (see `AppHost.cs` and step 2b). The AcrPull assignment is created on that registry. The API image is pushed to the repository `flaskeinnsamling-api` (e.g. `leifssharedacr.azurecr.io/flaskeinnsamling-api:aspire-deploy-<timestamp>`) so it doesn't clash with other apps; the Container App is still named `api`.
 
 Because Aspire creates role assignments, the *Contributor* role is not enough for the deploying identity. It also needs a role that can assign roles (see step 4).
 
