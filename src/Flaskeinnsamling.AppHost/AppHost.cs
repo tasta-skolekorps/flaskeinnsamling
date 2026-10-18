@@ -41,8 +41,15 @@ var api = builder.AddProject<Projects.Flaskeinnsamling_Api>("api")
 
 // The registry is shared with other apps, so push to a distinct repository.
 // The resource stays "api" to keep the Container App name and URL.
+// A custom push callback replaces Aspire's default unique tag, so set one here;
+// a constant tag like "latest" would not roll out a new revision.
+var deployTag = $"aspire-deploy-{DateTime.UtcNow:yyyyMMddHHmmss}";
 #pragma warning disable ASPIREPIPELINES003 // WithImagePushOptions is experimental in Aspire 13.x.
-api.WithImagePushOptions(context => context.Options.RemoteImageName = "flaskeinnsamling-api");
+api.WithImagePushOptions(context =>
+{
+    context.Options.RemoteImageName = "flaskeinnsamling-api";
+    context.Options.RemoteImageTag = deployTag;
+});
 #pragma warning restore ASPIREPIPELINES003
 
 builder.Build().Run();
