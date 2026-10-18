@@ -3,8 +3,13 @@ using Azure.Provisioning.Storage;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+// Shared registry in rg-common instead of one registry per app.
+var acr = builder.AddAzureContainerRegistry("acr")
+    .PublishAsExisting("leifssharedacr", "rg-common");
+
 // No managed Aspire dashboard in Azure to keep cost down; use Log Analytics instead.
 builder.AddAzureContainerAppEnvironment("env")
+    .WithAzureContainerRegistry(acr)
     .WithDashboard(false);
 
 var storage = builder.AddAzureStorage("storage")

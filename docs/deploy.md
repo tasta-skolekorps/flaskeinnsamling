@@ -16,14 +16,15 @@ The workflow signs in to Azure with **OIDC (federated credentials)**. It uses no
 
 ## What Aspire creates in Azure
 
-Everything goes into one resource group (default `rg-flaskeinnsamling`):
+The app's resources go into one resource group (default `rg-flaskeinnsamling`):
 
 - Container Apps environment with a Log Analytics workspace (no Aspire dashboard in Azure, to keep costs down; use Log Analytics for logs)
 - Container App `api` with a public HTTPS address (0–1 replicas, scales to zero)
-- Azure Container Registry (Basic) for the container images
 - Two user-assigned managed identities: one for pulling images from the registry and one for the API's access to the storage account
 - Storage account (Standard_LRS) with Table Storage (`tables`)
 - **Role assignments:** AcrPull on the registry, and Storage Table Data Contributor on the storage account for the API's identity
+
+Aspire does **not** create a registry. It uses the existing shared Azure Container Registry `leifssharedacr` (Basic) in the resource group `rg-common` (see `AppHost.cs` and step 2b). The AcrPull assignment is created on that registry.
 
 Because Aspire creates role assignments, the *Contributor* role is not enough for the deploying identity. It also needs a role that can assign roles (see step 4).
 
@@ -62,6 +63,15 @@ az group create --name $RG --location $LOCATION
 
 The workflow sets `Azure__AllowResourceGroupCreation=false`, so the resource group **must** exist before the first deployment.
 
+### 2b. Create the shared resource group and container registry
+
+`rg-common` holds resources shared across apps: the deploy identity (step 3b) and the container registry. It is not touched by `aspire destroy`. ACR names may only contain letters and digits.
+
+```powershell
+az group create --name "rg-common" --location $LOCATION
+az acr create --name "leifssharedacr" --resource-group "rg-common" --location $LOCATION --sku Basic --admin-enabled false
+```
+
 ### 3a. Create an app registration with a federated credential (recommended)
 
 ```powershell
@@ -82,10 +92,9 @@ Remove-Item fic.json
 
 ### 3b. Alternative: user-assigned managed identity
 
-Use this if you cannot create app registrations (the current setup uses this option). Put the identity in the **separate** resource group `rg-common`, which holds shared resources such as identities for GitHub Actions, so it is not deleted if you tear down `rg-flaskeinnsamling` with `aspire destroy`.
+Use this if you cannot create app registrations (the current setup uses this option). Put the identity in the **separate** resource group `rg-common` (step 2b), so it is not deleted if you tear down `rg-flaskeinnsamling` with `aspire destroy`.
 
 ```powershell
-az group create --name "rg-common" --location $LOCATION
 $APP_ID = az identity create --name "id-github-flaskeinnsamling" --resource-group "rg-common" --query clientId -o tsv
 $SP_ID = az identity show --name "id-github-flaskeinnsamling" --resource-group "rg-common" --query principalId -o tsv
 az identity federated-credential create `
@@ -106,8 +115,32 @@ az role assignment create --assignee-object-id $SP_ID --assignee-principal-type 
 ```
 
 - **Contributor** lets Aspire create and update the resources.
-- **Role Based Access Control Administrator** lets Aspire create the role assignments for the managed identities (AcrPull and Storage Table Data Contributor). *User Access Administrator* also works, but grants more than needed.
+- **Role Based Access Control Administrator** lets Aspire create the Storage Table Data Contributor assignment for the API's identity. *User Access Administrator* also works, but grants more than needed.
 - The roles apply **only** to the resource group, not the whole subscription.
+
+Then grant narrow access to the shared registry in `rg-common`. Aspire runs small nested deployments there (looking up the registry and assigning AcrPull), pushes images, and assigns AcrPull to the environment's pull identity:
+
+```powershell
+$ACR_ID = az acr show --name "leifssharedacr" --resource-group "rg-common" --query id -o tsv
+@{
+  Name             = "Resource Group Deployment Operator"
+  IsCustom         = $true
+  Description      = "Create and manage ARM deployments in a resource group (no resource write access)."
+  Actions          = @("Microsoft.Resources/deployments/*", "Microsoft.Resources/subscriptions/resourceGroups/read")
+  NotActions       = @()
+  AssignableScopes = @("/subscriptions/$SUBSCRIPTION_ID")
+} | ConvertTo-Json | Set-Content -Encoding utf8 role.json
+az role definition create --role-definition "@role.json"   # once per subscription
+Remove-Item role.json
+az role assignment create --assignee-object-id $SP_ID --assignee-principal-type ServicePrincipal --role "Resource Group Deployment Operator" --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/rg-common"
+az role assignment create --assignee-object-id $SP_ID --assignee-principal-type ServicePrincipal --role "AcrPush" --scope $ACR_ID
+$COND = "((!(ActionMatches{'Microsoft.Authorization/roleAssignments/write'})) OR (@Request[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {7f951dda-4ed3-4680-a7ca-43fe172d538d} AND @Request[Microsoft.Authorization/roleAssignments:PrincipalType] ForAnyOfAnyValues:StringEqualsIgnoreCase {'ServicePrincipal'})) AND ((!(ActionMatches{'Microsoft.Authorization/roleAssignments/delete'})) OR (@Resource[Microsoft.Authorization/roleAssignments:RoleDefinitionId] ForAnyOfAnyValues:GuidEquals {7f951dda-4ed3-4680-a7ca-43fe172d538d}))"
+az role assignment create --assignee-object-id $SP_ID --assignee-principal-type ServicePrincipal --role "Role Based Access Control Administrator" --scope $ACR_ID --condition $COND --condition-version 2.0
+```
+
+- **Resource Group Deployment Operator** (custom) only allows ARM deployments in `rg-common`, not changes to the identity or other shared resources.
+- **AcrPush** on the registry lets the workflow push images.
+- **Role Based Access Control Administrator** on the registry is constrained to granting or removing **AcrPull** (`7f951dda-…`) for service principals.
 
 Role assignments can take a few minutes to propagate. If the first deployment fails with `AuthorizationFailed`, wait a bit and run it again.
 
@@ -183,7 +216,7 @@ The address has the form `https://api.<something>.norwayeast.azurecontainerapps.
 
 - **Azure Container Apps (Consumption):** the API scales to zero when idle, and the monthly free grant (vCPU-seconds, GiB-seconds and 2 million requests) normally covers a small band. Expect a cold start of a few seconds after a period without traffic.
 - **Storage account (Table Storage):** a few kroner per month for such small amounts of data.
-- **Azure Container Registry (Basic):** the largest fixed cost, about USD 5 per month.
+- **Azure Container Registry (Basic):** about USD 5 per month, but the registry `leifssharedacr` is shared with other apps in `rg-common`.
 - **Log Analytics:** pay per GB of ingested logs. Low volume means very low cost.
 
 Consider setting up a budget alert on the resource group under **Cost Management → Budgets** in the Azure portal.
@@ -192,5 +225,5 @@ Consider setting up a budget alert on the resource group under **Cost Management
 
 - **Rotate the admin key:** run `gh secret set ADMIN_API_KEY --repo tasta-skolekorps/flaskeinnsamling --env production` again, then start the workflow manually.
 - **Troubleshooting:** the log from the "Deploy with Aspire" step shows each Aspire step. In Azure: `az containerapp logs show --resource-group rg-flaskeinnsamling --name api --tail 100` (requires `az extension add --name containerapp`).
-- **Tear everything down:** run `aspire destroy` locally after `az login`. The command deletes the **entire** resource group, including the storage account with all season data, so download a JSON backup of each season in `admin.html` first. The app registration, or the identity in `rg-common`, is left in place.
+- **Tear everything down:** run `aspire destroy` locally after `az login`. The command deletes the **entire** resource group, including the storage account with all season data, so download a JSON backup of each season in `admin.html` first. The app registration, or the identity, and the shared registry in `rg-common` are left in place.
 - **Upgrade Aspire:** update `ASPIRE_VERSION` in `deploy.yml` together with the Aspire packages in `src/`.
