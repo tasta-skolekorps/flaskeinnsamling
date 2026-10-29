@@ -61,6 +61,11 @@ td.act{width:150px;white-space:nowrap}
 </div>
 
 <section id="editor" hidden>
+<h2>Datoer</h2>
+<p class="muted">Utdeling av pakker til musikantene og når lappene skal i postkassene. Tomt felt = standard (utdeling mandag minst 2 uker før, lapper ut onsdag–søndag samme uke).</p>
+<table><thead><tr><th>Innsamling</th><th>Utdeling av pakker</th><th>Lapper i postkassen</th></tr></thead><tbody id="dates"></tbody></table>
+<div class="row" style="margin-top:8px" id="datesBox"><button type="button" id="saveDates">Lagre datoer</button><span class="msg"></span></div>
+
 <h2>Rodefordeling</h2>
 <p class="muted">Skriv navnene adskilt med komma. Tomt felt = roden samles ikke inn.</p>
 <div class="row"><input type="search" id="filter" placeholder="Filtrer på rode eller navn …" size="34"></div>
@@ -159,7 +164,22 @@ td.act{width:150px;white-space:nowrap}
     }
   }
 
-  function render() { renderRoder(); renderReception(); }
+  function render() { renderDates(); renderRoder(); renderReception(); }
+
+  const shiftDate = (d, days) => { const t = new Date(d + 'T12:00'); t.setDate(t.getDate() + days); return t.toISOString().slice(0, 10); };
+  const defaultHandout = d => { const t = new Date(d + 'T12:00'); t.setDate(t.getDate() - 14); while (t.getDay() !== 1) t.setDate(t.getDate() - 1); return t.toISOString().slice(0, 10); };
+
+  function renderDates() {
+    const handouts = doc.handouts || {}, notices = doc.notices || {};
+    const dateInput = (kind, d, value, label) =>
+      `<input type="date" data-kind="${kind}" data-date="${esc(d)}" value="${esc(value || '')}" data-orig="${esc(value || '')}" aria-label="${esc(label)}">`;
+    $('dates').innerHTML = (doc.collections || []).map(d => {
+      const std = defaultHandout(d);
+      return `<tr><td>${esc(fmtDate(d))}${new Date(d + 'T12:00').getDay() === 3 ? '' : ' <span class="err">(ikke onsdag)</span>'}</td>
+        <td>${dateInput('handouts', d, handouts[d], 'Utdeling for ' + d)}<div class="muted">Standard: ${esc(fmtDate(std))}</div></td>
+        <td>${dateInput('notices', d, notices[d], 'Lapper ut for ' + d)}<div class="muted">Standard: ${esc(fmtDate(shiftDate(handouts[d] || std, 2)))} – ${esc(fmtDate(shiftDate(handouts[d] || std, 6)))}</div></td></tr>`;
+    }).join('') || '<tr><td colspan="3" class="muted">Sesongen har ingen innsamlingsdatoer.</td></tr>';
+  }
 
   function renderRoder() {
     const housing = doc.housing || {}, assignments = doc.assignments || {};
@@ -227,6 +247,26 @@ td.act{width:150px;white-space:nowrap}
     const area = box.querySelector('textarea'), names = splitNames(area.value, /\r?\n/);
     area.value = names.join('\n');
     save(box, area, `/api/seasons/${encodeURIComponent(seasonSel.value)}/reception/${encodeURIComponent(box.dataset.date)}/${encodeURIComponent(box.dataset.slot)}`, names);
+  });
+
+  $('dates').addEventListener('input', e => { if (e.target.dataset.kind) e.target.closest('td').classList.toggle('changed', e.target.value !== e.target.dataset.orig); });
+  $('saveDates').addEventListener('click', async () => {
+    const btn = $('saveDates'), msg = $('datesBox').querySelector('.msg');
+    btn.disabled = true; say(msg, 'Lagrer …', true);
+    try {
+      // Re-read so the whole-season PUT doesn't overwrite changes made elsewhere since loading.
+      const fresh = await api('GET', '/api/seasons/' + encodeURIComponent(seasonSel.value));
+      const maps = {handouts: {...(fresh.handouts || {})}, notices: {...(fresh.notices || {})}};
+      for (const input of $('dates').querySelectorAll('input[data-kind]')) {
+        const map = maps[input.dataset.kind];
+        input.value ? map[input.dataset.date] = input.value : delete map[input.dataset.date];
+      }
+      await api('PUT', '/api/seasons/' + encodeURIComponent(fresh.season), {...fresh, ...maps});
+      doc = await api('GET', '/api/seasons/' + encodeURIComponent(fresh.season));
+      render();
+      say($('datesBox').querySelector('.msg'), 'Lagret', true);
+    } catch (e) { say(msg, e.message, false); }
+    finally { $('saveDates').disabled = false; }
   });
 
   $('filter').addEventListener('input', applyFilter);
