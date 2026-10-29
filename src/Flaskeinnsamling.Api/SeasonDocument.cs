@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Flaskeinnsamling.Api;
 
 /// <summary>
@@ -13,7 +15,8 @@ public sealed record SeasonDocument
     public List<string>? Contacts { get; init; }
     public string? Vipps { get; init; }
 
-    /// <summary>Rode → [addresses, dwellings].</summary>
+    /// <summary>Rode → [addresses, dwellings]. Admin-only; omitted from public reads.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public Dictionary<string, int[]>? Housing { get; init; }
 
     /// <summary>Korps group (e.g. Mellomkorps) → musician names.</summary>

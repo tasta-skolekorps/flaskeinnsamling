@@ -39,7 +39,6 @@ body.ark #map,body.ark .panel{display:none}
 .overview .cols{display:flex;gap:6mm;margin-top:3mm}
 .overview table{border-collapse:collapse;font-size:9pt;flex:1;align-self:flex-start}
 .overview th,.overview td{border-bottom:1px solid #ccc;padding:1mm 1.5mm;text-align:left;vertical-align:top}
-.overview td:last-child,.overview th:last-child{text-align:right}
 .rode header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--glass);padding-bottom:2mm}
 .rode .big{font-size:30pt;font-weight:700;line-height:1}
 .rode .people{margin-top:3mm}
@@ -47,7 +46,6 @@ body.ark #map,body.ark .panel{display:none}
 .rode .people b{font-size:26pt;line-height:1.2}
 .rode .people span{font-size:14pt;color:#444}
 .rode .facts{display:flex;justify-content:space-between;gap:4mm;margin:3mm 0;font-size:10pt}
-.rode .count{font-size:22pt;font-weight:700}
 .rode .facts table{border-collapse:collapse;font-size:9pt}
 .rode .facts td{padding:0 2mm 0 0}
 .rode .map{flex:1;border:1px solid #999}
@@ -85,8 +83,6 @@ const polys={"2001":[[58.974273,5.685687],[58.974253,5.685727],[58.974101,5.6860
 const byRode={"2001":["Alma Sygrove Biland"],"2002":["Ludvig Elgheim Johansson"],"2003":["Ida Barkved Holta"],"2004":["Ingeborg Svanevik Haga"],"2005":["Kaja Agathe Bakke"],"2006":["Linde Kristensen"],"2007":["Aurora Gribbestad Hetland"],"2008":["Julie Sørbø Kristiansen"],"2009":["Sigrid Kvernenes Pedersen"],"2010":["Max Müller-Eie"],"2011":["Wilmer Vere"],"2012":["Viktor Rydberg"],"2013":["Ipek Ziya"],"2014":["Ipek Ziya"],"2015":["Henrik Munoz","Marlen Munoz"],"2016":["Malene Aanonsen"],"2017":["Nora Hjelmervik"],"2018":["Mallin Idsøe"],"2019":["Eolos Maridakis"],"2020":["Guro Kvadsheim Neset"],"2021":["Dennis Oliversen Hamre"],"2022":["Amanda Wittmeyer"],"2023":["Edvard Zihao Zhao"],"2024":["Idunn Lunde Melberg"],"2026":["Lavrans Vicevic Johannesen"],"2027":["Erlend Pedersen"],"2028":["Ronja Sofie Ekroll"],"2029":["Sivert Fiskå"],"2030":["Mingsen Liu"],"2031":["Lucca Bergsagel"],"2032":["Henrik Munoz"],"2033":["Mia Karlson Myklebust"],"2034":["Tønnes Ognedal Fosså"],"2035":["Storm Fuglesten Sværen"],"2036":["Ella Oliversen Hamre"],"2101":["Astrid Kjøsnes Elvik"],"2102":["Tuva Sofie Sem"],"2103":["Hanna Gjerde Halvorsen"],"2104":["Yaman Radwan"],"2105":["Mina Nur Anli"],"2106":["Nida Nur Anli"],"2107":["Idun Sofie Ellingsen"],"2109":["Antonina Szubska"],"2112":["Olav Ådnøy"],"2113":["Albert Langenes Smith"],"2114":["Marcel Brackeva"],"2115":["Mohamed Masjd Balaous"],"2116":["Even Valen-Sendestad Torstrup"],"2117":["Ellinor Havnen Drangeid"],"2118":["Ada Gribbestad Hetland"],"2120":["Leah Celine Wolden"],"2121":["Ingeborg Braut Winnem"],"2122":["Eirill Lien Johansen"]};
 const season={name:'2026-27',collections:['2026-10-21','2027-01-06','2027-05-19'],handouts:{'2026-10-21':'2026-10-12','2027-01-06':'2026-12-14'},notices:{'2027-01-06':'2026-12-27'},contactUrl:'tasta-skolekorps.github.io/flaskeinnsamling/kontakt.html',vipps:'#87153'};
 const korps={"Alma Sygrove Biland":"Mellomkorps","Ludvig Elgheim Johansson":"Seniorkorps","Ida Barkved Holta":"Seniorkorps","Ingeborg Svanevik Haga":"Seniorkorps","Kaja Agathe Bakke":"Mellomkorps","Linde Kristensen":"Seniorkorps","Aurora Gribbestad Hetland":"Mellomkorps","Julie Sørbø Kristiansen":"Mellomkorps","Sigrid Kvernenes Pedersen":"Mellomkorps","Max Müller-Eie":"Mellomkorps","Wilmer Vere":"Mellomkorps","Viktor Rydberg":"Mellomkorps","Ipek Ziya":"Seniorkorps","Henrik Munoz":"Mellomkorps","Marlen Munoz":"Seniorkorps","Malene Aanonsen":"Seniorkorps","Nora Hjelmervik":"Mellomkorps","Mallin Idsøe":"Seniorkorps","Eolos Maridakis":"Mellomkorps","Guro Kvadsheim Neset":"Mellomkorps","Dennis Oliversen Hamre":"Mellomkorps","Edvard Zihao Zhao":"Mellomkorps","Idunn Lunde Melberg":"Mellomkorps","Lavrans Vicevic Johannesen":"Seniorkorps","Erlend Pedersen":"Mellomkorps","Ronja Sofie Ekroll":"Mellomkorps","Sivert Fiskå":"Mellomkorps","Mingsen Liu":"Mellomkorps","Lucca Bergsagel":"Mellomkorps","Mia Karlson Myklebust":"Mellomkorps","Tønnes Ognedal Fosså":"Mellomkorps","Storm Fuglesten Sværen":"Mellomkorps","Ella Oliversen Hamre":"Seniorkorps","Astrid Kjøsnes Elvik":"Seniorkorps","Tuva Sofie Sem":"Mellomkorps","Hanna Gjerde Halvorsen":"Seniorkorps","Yaman Radwan":"Mellomkorps","Mina Nur Anli":"Seniorkorps","Nida Nur Anli":"Seniorkorps","Idun Sofie Ellingsen":"Mellomkorps","Ingeborg Braut Winnem":"Mellomkorps","Antonina Szubska":"Mellomkorps","Amanda Wittmeyer":"Mellomkorps","Eirill Lien Johansen":"Mellomkorps","Olav Ådnøy":"Seniorkorps","Albert Langenes Smith":"Mellomkorps","Marcel Brackeva":"Mellomkorps","Mohamed Masjd Balaous":"Mellomkorps","Even Valen-Sendestad Torstrup":"Mellomkorps","Ellinor Havnen Drangeid":"Mellomkorps","Ada Gribbestad Hetland":"Seniorkorps","Leah Celine Wolden":"Mellomkorps"};
-// Dwellings (bruksenheter) per rode from Geonorge addresses = notices needed.
-const dwellings={"2001":60,"2002":81,"2003":59,"2004":68,"2005":117,"2006":87,"2007":84,"2008":85,"2009":67,"2010":85,"2011":70,"2012":105,"2013":52,"2014":72,"2015":81,"2016":76,"2017":74,"2018":47,"2019":64,"2020":84,"2021":68,"2022":86,"2023":109,"2024":94,"2026":92,"2027":78,"2028":45,"2029":108,"2030":43,"2031":108,"2032":44,"2033":75,"2034":54,"2035":66,"2036":43,"2101":75,"2102":62,"2103":59,"2104":93,"2105":48,"2106":35,"2109":59,"2112":62,"2114":138,"2118":89,"2120":68,"2121":48,"2122":45,"2025":13,"2107":74,"2108":112,"2110":126,"2111":120,"2113":47,"2115":76,"2116":226,"2117":86};
 // Uncollected roder shown on the map: between the northern line 2114–2117 and the southern line 2002–2005.
 const shownFree=['2011','2022','2025','2107','2108','2110','2111','2113','2115','2116','2117'];
 const tileUrl='https://cache.kartverket.no/v1/wmts/1.0.0/topograatone/default/webmercator/{z}/{y}/{x}.png';
@@ -98,16 +94,15 @@ const handoutDate=d=>{if(season.handouts[d])return season.handouts[d];const t=ne
 const area=r=>r.startsWith('20')?'Sør':'Nord';
 const contactText=season.contactUrl;
 const esc=flaskeApi.esc;
-const dw=r=>dwellings[r]??'?';
 let assigned=Object.keys(byRode).sort();
 let refreshMap=()=>{};
 // Embedded data above is the fallback. The map renders at once and re-renders when the API answers;
 // ark (PDF) mode waits for the API or its timeout first so window.arkReady still means "all rendered".
 const apiDoc=flaskeApi.loadSeason(season.name);
-const embedded=JSON.parse(JSON.stringify({season,byRode,dwellings,korps}));
+const embedded=JSON.parse(JSON.stringify({season,byRode,korps}));
 // Puts the embedded data back if applying or rendering API data fails halfway.
 const restoreEmbedded=()=>{
-  for(const [k,obj] of Object.entries({season,byRode,dwellings,korps})){for(const key of Object.keys(obj)) delete obj[key];Object.assign(obj,embedded[k]);}
+  for(const [k,obj] of Object.entries({season,byRode,korps})){for(const key of Object.keys(obj)) delete obj[key];Object.assign(obj,embedded[k]);}
   assigned=Object.keys(byRode).sort();
 };
 if(new URLSearchParams(location.search).has('ark')) apiDoc.then(doc=>{
@@ -127,7 +122,6 @@ function applyApi(doc){
   if(doc.handouts&&typeof doc.handouts==='object') season.handouts=doc.handouts;
   if(doc.notices&&typeof doc.notices==='object') season.notices=doc.notices;
   if(typeof doc.vipps==='string'&&doc.vipps) season.vipps=doc.vipps;
-  if(has(doc.housing)) for(const [r,v] of Object.entries(doc.housing)) if(Array.isArray(v)&&Number.isFinite(v[1])) dwellings[r]=v[1];
   if(has(doc.korps)) for(const [group,names] of Object.entries(doc.korps)) if(Array.isArray(names)) for(const n of names) korps[n]=group;
   if(has(doc.assignments)){
     const next={};
@@ -150,18 +144,17 @@ function renderArk(){
   document.body.classList.add('ark');
   document.title='Rodeark '+season.name+' – flaskeinnsamling Tasta Skolekorps';
   const dates=season.collections.map(fmtDate).join(' · ');
-  const total=assigned.reduce((s,r)=>s+(dwellings[r]||0),0);
-  const table=rs=>'<table><thead><tr><th>Rode</th><th>Ansvarlig</th><th>Postkasser</th></tr></thead><tbody>'+rs.map(r=>`<tr><td><b>${r}</b></td><td>${byRode[r].map(esc).join('<br>')}</td><td>${dw(r)}</td></tr>`).join('')+'</tbody></table>';
+  const table=rs=>'<table><thead><tr><th>Rode</th><th>Ansvarlig</th></tr></thead><tbody>'+rs.map(r=>`<tr><td><b>${r}</b></td><td>${byRode[r].map(esc).join('<br>')}</td></tr>`).join('')+'</tbody></table>';
   const half=Math.ceil(assigned.length/2);
   const schedule='<table>'+season.collections.map(d=>`<tr><td>Lapper ut:</td><td>${season.notices[d]?fmtShort(season.notices[d]):fmtShort(addDays(handoutDate(d),2))+', senest '+fmtShort(addDays(handoutDate(d),6))}</td></tr><tr><td><b>Innsamling:</b></td><td><b>${fmtDate(d)}</b></td></tr>`).join('')+'</table>';
   let html=`<section class="page overview"><h1>Rodefordeling ${season.name}</h1>
     <p>Tasta Skolekorps · flaskeinnsamling kl. 17–20:30 · mottak på Byfjord skole</p><p>${dates}</p>
     <div class="cols">${table(assigned.slice(0,half))}${table(assigned.slice(half))}</div>
-    <p style="margin-top:auto">${assigned.length} roder · ${total} postkasser totalt · Kontakt: ${contactText} · Vipps ${esc(season.vipps)}</p></section>`;
+    <p style="margin-top:auto">${assigned.length} roder · Kontakt: ${contactText} · Vipps ${esc(season.vipps)}</p></section>`;
   for(const r of assigned){
     html+=`<section class="page rode"><header><div><div class="big">Rode ${r}</div><div>${area(r)} · Tasta Skolekorps flaskeinnsamling ${season.name}</div></div></header>
       <div class="people">${byRode[r].map(n=>`<div><b>${esc(n)}</b><span>${esc(korps[n]||'')}</span></div>`).join('')}</div>
-      <div class="facts"><div><div class="count">${dw(r)}</div>postkasser = lapper som trengs</div>${schedule}</div>
+      <div class="facts">${schedule}</div>
       <div class="map" id="m${r}"></div>
       <footer>Samle inn kl. 17–20:30 og lever flasker, bokser og badgen i mottaket på Byfjord skole. Kan du ikke? Finn en erstatter. Kontakt: ${contactText} · Vipps ${esc(season.vipps)}</footer></section>`;
   }
@@ -214,7 +207,7 @@ const draw=()=>{
     if(has) bounds.push(...ring);
     const c=poly.getBounds().getCenter();
     L.tooltip({permanent:true,direction:'center',className:'lbl'+(has?'':' free'),opacity:1}).setLatLng(c)
-      .setContent('<b>'+rode+'</b>'+(has?names.map(esc).join('<br>'):'Samles ikke inn')+'<small>'+dw(rode)+' postkasser</small>')
+      .setContent('<b>'+rode+'</b>'+(has?names.map(esc).join('<br>'):'Samles ikke inn'))
       .addTo(has?rodeLayer:freeLayer);
   }
   if(freeBox.checked) freeLayer.addTo(map);

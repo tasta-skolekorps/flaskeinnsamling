@@ -99,7 +99,7 @@ public sealed class SeasonImportTests(ApiFixture fx)
             AssertNoForbidden(await response.Content.ReadAsStringAsync());
         }
 
-        var season = await fx.GetJsonAsync($"/api/seasons/{TestSeason}");
+        var season = await fx.GetJsonAsync($"/api/seasons/{TestSeason}", fx.AdminKey);
         foreach (var field in new[] { "season", "collections", "handouts", "notices", "contacts", "vipps", "housing", "korps", "assignments", "reception" })
         {
             Assert.True(JsonNode.DeepEquals(sent[field], season[field]),
@@ -123,7 +123,7 @@ public sealed class SeasonImportTests(ApiFixture fx)
         using (var second = await fx.PutAsync($"/api/seasons/{TestSeason}", smaller, fx.AdminKey))
             Assert.Equal(HttpStatusCode.NoContent, second.StatusCode);
 
-        var season = await fx.GetJsonAsync($"/api/seasons/{TestSeason}");
+        var season = await fx.GetJsonAsync($"/api/seasons/{TestSeason}", fx.AdminKey);
         Assert.True(JsonNode.DeepEquals(smaller["housing"], season["housing"]), season["housing"]?.ToJsonString());
         Assert.True(JsonNode.DeepEquals(smaller["assignments"], season["assignments"]), season["assignments"]?.ToJsonString());
         Assert.True(JsonNode.DeepEquals(new JsonObject(), season["reception"]), season["reception"]?.ToJsonString());
