@@ -319,9 +319,9 @@ td input{width:100%}
     }
     map.invalidateSize();
     rodeLayer.clearLayers(); layers = {};
-    const keys = Object.keys(geo.polys), visible = new Set([...allRoder(), ...geo.shownFree]), bounds = [];
+    const keys = Object.keys(geo.polys), bounds = [];
     keys.forEach((r, idx) => {
-      if (!visible.has(r)) return;
+      if (!clean(current(r)).length && !geo.shownFree.includes(r) && r !== selected && !isChanged(r)) return;
       const ring = geo.polys[r], names = clean(current(r)), has = names.length > 0;
       const color = has ? COLORS[idx % COLORS.length] : '#777';
       const poly = L.polygon(ring, {color, weight: r === selected ? 5 : has ? 2 : 1.5, fillColor: color, fillOpacity: has ? 0.28 : 0.3, dashArray: has ? null : '5 4'})
