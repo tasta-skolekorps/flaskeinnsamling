@@ -40,11 +40,15 @@ var seasons = app.MapGroup("/api/seasons");
 seasons.MapGet("/", async (SeasonStore store, CancellationToken ct) =>
     Results.Ok(await store.ListSeasonsAsync(ct)));
 
-seasons.MapGet("/{season}", async (string season, SeasonStore store, CancellationToken ct) =>
+// Housing (mailbox counts) is admin-only: a valid X-Admin-Key includes it, no key omits it, a wrong key is 401.
+seasons.MapGet("/{season}", async (string season, HttpRequest request, IConfiguration configuration, SeasonStore store, CancellationToken ct) =>
 {
     if (!Validation.IsSeason(season)) return Invalid("season", "Season must be yyyy-yy.");
+    var isAdmin = AdminKeyMiddleware.HasKey(request);
+    if (isAdmin && !AdminKeyMiddleware.IsAuthorized(request, configuration)) return Results.Unauthorized();
     var doc = await store.GetSeasonAsync(season, ct);
-    return doc is null ? Results.NotFound() : Results.Ok(doc);
+    if (doc is null) return Results.NotFound();
+    return Results.Ok(isAdmin ? doc : doc with { Housing = null });
 });
 
 seasons.MapPut("/{season}", async (string season, SeasonDocument document, SeasonStore store, CancellationToken ct) =>

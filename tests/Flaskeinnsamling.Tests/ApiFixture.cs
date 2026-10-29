@@ -105,9 +105,9 @@ public sealed class ApiFixture : IAsyncLifetime
     public async Task<HttpResponseMessage> PutAsync(string url, JsonNode body, string? key) =>
         await Client.SendAsync(Request(HttpMethod.Put, url, body, key));
 
-    public async Task<JsonNode> GetJsonAsync(string url)
+    public async Task<JsonNode> GetJsonAsync(string url, string? key = null)
     {
-        using var response = await Client.GetAsync(url);
+        using var response = await Client.SendAsync(Request(HttpMethod.Get, url, key: key));
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         return JsonNode.Parse(await response.Content.ReadAsStringAsync())!;
     }

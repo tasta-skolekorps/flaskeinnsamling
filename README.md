@@ -44,7 +44,7 @@ The public pages ([`rodekart.html`](rodekart.html), [`vaktliste.html`](vaktliste
 | Method | Path | Description |
 | --- | --- | --- |
 | GET | `/api/seasons` | List of seasons, e.g. `["2026-27"]` |
-| GET | `/api/seasons/{season}` | The whole season (`collections`, `handouts`, `notices`, `contacts`, `vipps`, `housing`, `korps`, `assignments`, `reception`) |
+| GET | `/api/seasons/{season}` | The whole season (`collections`, `handouts`, `notices`, `contacts`, `vipps`, `housing`, `korps`, `assignments`, `reception`). `housing` (mailbox counts) is only included when a valid `X-Admin-Key` is sent; a wrong key returns `401` |
 | PUT | `/api/seasons/{season}` | Replaces the whole season (import). Admin |
 | GET | `/api/seasons/{season}/assignments` | `{"2001": ["Name"]}` |
 | PUT | `/api/seasons/{season}/assignments/{rode}` | Body `["Name"]`; an empty list deletes. Admin |

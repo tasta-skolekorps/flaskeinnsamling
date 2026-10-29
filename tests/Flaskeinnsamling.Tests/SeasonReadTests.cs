@@ -16,7 +16,6 @@ public sealed class SeasonReadTests(ApiFixture fx)
     [InlineData("collections")]
     [InlineData("contacts")]
     [InlineData("vipps")]
-    [InlineData("housing")]
     [InlineData("korps")]
     [InlineData("assignments")]
     [InlineData("reception")]
@@ -28,6 +27,27 @@ public sealed class SeasonReadTests(ApiFixture fx)
         var actual = season[field];
         Assert.True(JsonNode.DeepEquals(expected, actual),
             $"'{field}' differs.\nExpected: {expected?.ToJsonString()}\nActual:   {actual?.ToJsonString()}");
+    }
+
+    [Fact]
+    public async Task GetSeason_WithoutKey_OmitsHousing()
+    {
+        var season = (await fx.GetJsonAsync($"/api/seasons/{ApiFixture.SeasonId}")).AsObject();
+        Assert.False(season.ContainsKey("housing"));
+    }
+
+    [Fact]
+    public async Task GetSeason_WithAdminKey_IncludesHousing()
+    {
+        var season = await fx.GetJsonAsync($"/api/seasons/{ApiFixture.SeasonId}", fx.AdminKey);
+        Assert.True(JsonNode.DeepEquals(fx.Season["housing"], season["housing"]), season["housing"]?.ToJsonString());
+    }
+
+    [Fact]
+    public async Task GetSeason_WithWrongKey_Returns401()
+    {
+        using var response = await fx.Client.SendAsync(fx.Request(HttpMethod.Get, $"/api/seasons/{ApiFixture.SeasonId}", key: "wrong-key"));
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
     [Fact]

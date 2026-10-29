@@ -99,6 +99,8 @@ td.act{width:150px;white-space:nowrap}
     const v = keyInput.value.trim();
     v ? sessionStorage.setItem(KEY_STORE, v) : sessionStorage.removeItem(KEY_STORE);
   });
+  // Reload so the admin-only mailbox counts appear once the key is pasted.
+  keyInput.addEventListener('change', () => { if (seasonSel.value) loadSeason(); });
   $('forget').addEventListener('click', () => { sessionStorage.removeItem(KEY_STORE); keyInput.value = ''; });
 
   const say = (el, text, ok) => { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); };
@@ -111,10 +113,11 @@ td.act{width:150px;white-space:nowrap}
   async function api(method, path, body) {
     if (!base) throw new Error('API-et er ikke satt opp (API_BASE i api.js).');
     const headers = {Accept: 'application/json'};
+    const key = keyInput.value.trim();
+    // Mailbox counts (housing) are only returned to admins, so send the key on reads too.
+    if (key) headers['X-Admin-Key'] = key;
     if (method !== 'GET') {
-      const key = keyInput.value.trim();
       if (!key) throw new Error('Lim inn admin-nøkkelen først.');
-      headers['X-Admin-Key'] = key;
       headers['Content-Type'] = 'application/json';
     }
     const res = await fetch(base + path, {method, headers, mode: 'cors', cache: 'no-store', body: body === undefined ? undefined : JSON.stringify(body)});

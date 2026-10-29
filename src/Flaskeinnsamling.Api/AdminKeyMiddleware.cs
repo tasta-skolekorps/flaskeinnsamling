@@ -13,7 +13,7 @@ public sealed class AdminKeyMiddleware(RequestDelegate next, IConfiguration conf
 
     public async Task InvokeAsync(HttpContext context)
     {
-        if (RequiresAdmin(context.Request) && !IsAuthorized(context.Request))
+        if (RequiresAdmin(context.Request) && !IsAuthorized(context.Request, configuration))
         {
             logger.LogWarning("Rejected unauthorized {Method} {Path}", context.Request.Method, context.Request.Path);
             context.Response.StatusCode = StatusCodes.Status401Unauthorized;
@@ -26,7 +26,9 @@ public sealed class AdminKeyMiddleware(RequestDelegate next, IConfiguration conf
         request.Path.StartsWithSegments("/api") &&
         !(HttpMethods.IsGet(request.Method) || HttpMethods.IsHead(request.Method) || HttpMethods.IsOptions(request.Method));
 
-    private bool IsAuthorized(HttpRequest request)
+    public static bool HasKey(HttpRequest request) => !string.IsNullOrEmpty(request.Headers[HeaderName].ToString());
+
+    public static bool IsAuthorized(HttpRequest request, IConfiguration configuration)
     {
         var expected = configuration["Admin:ApiKey"];
         if (string.IsNullOrEmpty(expected)) return false;
