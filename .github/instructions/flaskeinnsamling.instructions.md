@@ -65,6 +65,6 @@ The user always logs in to every site themselves in the Playwright browser. Neve
 - Each musician gets a package: the rode page, notices and a **badge**. Don't generate badges. They wear the badge while collecting and return it at the reception at Byfjord skole.
 - Reception duty list [vaktliste.html](../../vaktliste.html): reception seniors grouped by time slot for each collection date.
 - Contact page [kontakt.html](../../kontakt.html): the whole Flaskekomiteen (names only, from the season's `contacts` in the API), a pointer to Spond for phone numbers, plus Vipps. Don't publish phone numbers. Every other mention of contact (menu footer, pages, rodekart panel, PDF) points to this page instead of listing people.
-- Admin page [admin.html](../../admin.html) (Bokmål, not in the menu, `noindex`): edit `assignments` and `reception`, download a season as JSON (backup) and import a whole season.
+- Admin page [admin.html](../../admin.html) (Bokmål, linked only from the menu footer under Kontakt, `noindex`): edit `assignments` and `reception`, download a season as JSON (backup) and import a whole season.
 - Process one-pager for families [index.html](../../index.html) (Bokmål). It explains how collection day works: notices, time, rode, badge, drop-off at Byfjord skole, contact and Vipps.
 - Flag any collection date that is not a Wednesday.
