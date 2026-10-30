@@ -39,12 +39,13 @@ td input{width:100%}
 #roder tr.sel td{background:#eef7f1}
 .slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
 .slot{border:1px solid #cfe3d6;border-top:4px solid var(--glass);border-radius:6px;padding:8px 10px;background:#fbfdfb}
-.slot textarea{width:100%;min-height:130px;margin:4px 0}
+.slot .ed{margin-top:4px}
+.slot .ed select{flex-basis:100%}
 .msg{font-size:13px;margin-left:6px}
 .ok{color:var(--glass)}
 .err{color:#b00020}
 .muted{color:#666;font-size:14px}
-.changed input,.changed textarea{border-color:var(--amber);background:#fff8ee}
+.changed input{border-color:var(--amber);background:#fff8ee}
 #json{width:100%;min-height:200px;font-family:ui-monospace,Consolas,monospace;font-size:12px}
 [hidden]{display:none!important}
 </style></head><body class="has-side">
@@ -103,7 +104,7 @@ td input{width:100%}
 </div>
 
 <h2>Mottaksvakter (Byfjord skole)</h2>
-<p class="muted">Ett navn per linje. Tom vakt = ingen på vakt.</p>
+<p class="muted">Velg musikant(er) i nedtrekkslisten for hver vakt. Bruk «+ legg til» for flere, og velg «(ingen)» for å fjerne et navn. Trykk «Lagre» for hver vakt du har endret. Tom vakt = ingen på vakt. «– vakt 18:30–20:00» bak et navn betyr at musikanten allerede står på en annen vakt samme dag, og «– rode 2101» at musikanten har rode.</p>
 <div id="reception"></div>
 
 <h2>Hele sesongen (JSON)</h2>
@@ -137,7 +138,7 @@ td input{width:100%}
   }
   // Without a key the editor is hidden, so nothing from the season stays on screen.
   function clearEditor() {
-    doc = null; drafts = {}; selected = null;
+    doc = null; drafts = {}; recDrafts = {}; selected = null;
     $('editor').hidden = true;
     $('roder').innerHTML = ''; $('reception').innerHTML = ''; $('pick').innerHTML = ''; $('dates').innerHTML = '';
     $('counts').textContent = ''; $('free').textContent = '';
@@ -162,7 +163,6 @@ td input{width:100%}
   renderKeyState();
 
   const say = (el, text, ok) => { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); };
-  const splitNames = (s, sep) => s.split(sep).map(n => n.trim()).filter(Boolean);
   const fmtDate = d => {
     const s = new Date(d + 'T12:00').toLocaleDateString('nb-NO', {weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'});
     return s.charAt(0).toUpperCase() + s.slice(1);
@@ -230,7 +230,8 @@ td input{width:100%}
     }
   }
 
-  function render() { renderDates(); renderRoder(); renderReception(); }
+  // refreshRoder() also re-renders the reception editor.
+  function render() { recDrafts = {}; renderDates(); renderRoder(); }
 
   const shiftDate = (d, days) => { const t = new Date(d + 'T12:00'); t.setDate(t.getDate() + days); return t.toISOString().slice(0, 10); };
   const defaultHandout = d => { const t = new Date(d + 'T12:00'); t.setDate(t.getDate() - 14); while (t.getDay() !== 1) t.setDate(t.getDate() - 1); return t.toISOString().slice(0, 10); };
@@ -258,7 +259,8 @@ td input{width:100%}
   const TILE_URL = 'https://cache.kartverket.no/v1/wmts/1.0.0/topograatone/default/webmercator/{z}/{y}/{x}.png';
   const COLORS = ['#e6194b','#3cb44b','#4363d8','#f58231','#911eb4','#42d4f4','#f032e6','#bfef45','#fabed4','#469990','#dcbeff','#9A6324','#800000','#aaffc3','#808000','#ffd8b1','#000075','#a9a9a9'];
   const byName = (a, b) => a.localeCompare(b, 'nb');
-  let drafts = {}, selected = null, geo = null, map = null, rodeLayer = null, layers = {};
+  const OTHER = 'Andre (ikke i korps)';
+  let drafts = {}, recDrafts = {}, selected = null, geo = null, map = null, rodeLayer = null, layers = {};
 
   // rodekart.html stays self-contained (PDF + offline fallback), so the polygons are read from it.
   const geoReady = fetch('rodekart.html', {cache: 'no-cache'})
@@ -311,7 +313,7 @@ td input{width:100%}
       if (list.length) groups.push([group, list]);
     }
     const other = Object.keys(holders()).filter(n => !known.has(n)).sort(byName);
-    if (other.length) groups.push(['Andre (ikke i korps)', other]);
+    if (other.length) groups.push([OTHER, other]);
     return groups;
   }
 
@@ -333,10 +335,10 @@ td input{width:100%}
   function refreshRoder() {
     if (!doc) return;
     // Re-rendering replaces the controls, so remember focus and status messages.
-    const active = document.activeElement, ed = active && active.closest && active.closest('.ed');
+    const active = document.activeElement, ed = active && active.closest && active.closest('#roder .ed, #pick .ed');
     const focus = ed && {box: ed.closest('#pick') ? 'pick' : 'roder', rode: ed.dataset.rode, i: active.dataset.i, act: active.dataset.act};
     const msgs = {};
-    for (const box of document.querySelectorAll('.ed')) {
+    for (const box of document.querySelectorAll('#roder .ed, #pick .ed')) {
       const m = box.querySelector('.msg');
       if (m.textContent) msgs[(box.closest('#pick') ? 'pick:' : 'roder:') + box.dataset.rode] = [m.textContent, m.className];
     }
@@ -349,7 +351,7 @@ td input{width:100%}
       ? `<h3>Rode ${esc(selected)}</h3><p class="muted">${selected.startsWith('20') ? 'Sør' : 'Nord'} · ${esc(dwellingsOf(selected))} postkasser</p>${editorHtml(selected, ctx)}`
       : '<h3>Velg en rode</h3><p class="muted">Klikk på en rode i kartet for å endre hvem som har den.</p>';
 
-    for (const box of document.querySelectorAll('.ed')) {
+    for (const box of document.querySelectorAll('#roder .ed, #pick .ed')) {
       const m = msgs[(box.closest('#pick') ? 'pick:' : 'roder:') + box.dataset.rode];
       if (m && !isChanged(box.dataset.rode)) { const el = box.querySelector('.msg'); el.textContent = m[0]; el.className = m[1]; }
     }
@@ -367,6 +369,7 @@ td input{width:100%}
       : 'Alle musikanter har rode.';
     applyFilter();
     drawMap(false);
+    refreshReception(ctx);
   }
 
   function drawMap(fit) {
@@ -447,18 +450,94 @@ td input{width:100%}
     else if (act === 'save') saveRode(r, box);
   }
 
-  function renderReception() {
-    const reception = doc.reception || {};
-    const dates = [...new Set([...(doc.collections || []), ...Object.keys(reception)])].sort();
-    $('reception').innerHTML = dates.map(d => {
-      const slots = [...new Set([...DEFAULT_SLOTS, ...Object.keys(reception[d] || {})])].sort();
-      return `<h3>${esc(fmtDate(d))}</h3><div class="slots">` + slots.map(slot => {
-        const names = ((reception[d] || {})[slot] || []).join('\n');
-        return `<div class="slot" data-date="${esc(d)}" data-slot="${esc(slot)}"><b>${esc(slot.replace('-', '–'))}</b>
-          <textarea data-orig="${esc(names)}" aria-label="Vakt ${esc(d)} ${esc(slot)}">${esc(names)}</textarea>
-          <div class="row"><button type="button">Lagre</button><span class="msg"></span></div></div>`;
-      }).join('') + '</div>';
+  // --- Reception duty editor ---
+  const recKey = (d, slot) => d + '|' + slot;
+  const recSaved = (d, slot) => (((doc.reception || {})[d] || {})[slot] || []).slice();
+  const recCurrent = (d, slot) => recDrafts[recKey(d, slot)] || recSaved(d, slot);
+  const recChanged = (d, slot) => {
+    const draft = recDrafts[recKey(d, slot)];
+    return !!draft && JSON.stringify(clean(draft)) !== JSON.stringify(clean(recSaved(d, slot)));
+  };
+  const recDates = () => [...new Set([...(doc.collections || []), ...Object.keys(doc.reception || {})])].sort();
+  const recSlots = d => [...new Set([...DEFAULT_SLOTS, ...Object.keys((doc.reception || {})[d] || {})])].sort();
+  const slotLabel = s => s.replace('-', '–');
+  const recBox = key => [...$('reception').querySelectorAll('.ed')].find(b => recKey(b.dataset.date, b.dataset.slot) === key);
+
+  // Seniors staff the reception, so seniorkorps comes first; saved names outside korps stay selectable.
+  function receptionGroups(groups) {
+    const korps = groups.filter(([g]) => g !== OTHER), known = new Set(korps.flatMap(([, names]) => names));
+    const isSenior = ([g]) => /senior/i.test(g);
+    const prev = (groups.find(([g]) => g === OTHER) || [OTHER, []])[1];
+    const other = [...new Set([...prev, ...onReception()])].filter(n => n && !known.has(n)).sort(byName);
+    return [...korps.filter(isSenior), ...korps.filter(g => !isSenior(g)), ...(other.length ? [[OTHER, other]] : [])];
+  }
+
+  function slotHtml(d, slot, ctx, busy) {
+    const list = recCurrent(d, slot), shown = list.length ? list : [''];
+    const selects = shown.map((name, i) => {
+      const opts = ctx.groups.map(([group, names]) => `<optgroup label="${esc(group)}">` + names.map(n => {
+        const vakt = (busy[n] || []).filter(s => s !== slot).map(slotLabel);
+        const note = (vakt.length ? ' – vakt ' + vakt.join(', ') : '') + (ctx.holders[n] ? ' – rode ' + ctx.holders[n].join(', ') : '');
+        return `<option value="${esc(n)}"${n === name ? ' selected' : ''}>${esc(n + note)}</option>`;
+      }).join('') + '</optgroup>').join('');
+      return `<select data-i="${i}" aria-label="Musikant ${i + 1} på vakt ${esc(d)} ${esc(slotLabel(slot))}"><option value=""${name ? '' : ' selected'}>(ingen)</option>${opts}</select>`;
+    }).join('');
+    return `<div class="slot"><b>${esc(slotLabel(slot))}</b>
+      <div class="ed${recChanged(d, slot) ? ' changed' : ''}" data-date="${esc(d)}" data-slot="${esc(slot)}">${selects}
+      <button type="button" class="ghost" data-act="add">+ legg til</button>
+      <button type="button" data-act="save">Lagre</button><span class="msg"></span></div></div>`;
+  }
+
+  function refreshReception(ctx) {
+    if (!doc) return;
+    const root = $('reception'), active = document.activeElement;
+    // Re-rendering replaces the controls, so remember focus and status messages.
+    const ed = active && active.closest && active.closest('#reception .ed');
+    const focus = ed && {key: recKey(ed.dataset.date, ed.dataset.slot), i: active.dataset.i, act: active.dataset.act};
+    const msgs = {};
+    for (const box of root.querySelectorAll('.ed')) {
+      const m = box.querySelector('.msg');
+      if (m.textContent) msgs[recKey(box.dataset.date, box.dataset.slot)] = [m.textContent, m.className];
+    }
+
+    const rctx = {groups: receptionGroups(ctx.groups), holders: ctx.holders};
+    root.innerHTML = recDates().map(d => {
+      const busy = {};
+      for (const s of recSlots(d)) for (const n of clean(recCurrent(d, s))) (busy[n] = busy[n] || []).push(s);
+      return `<h3>${esc(fmtDate(d))}</h3><div class="slots">` + recSlots(d).map(s => slotHtml(d, s, rctx, busy)).join('') + '</div>';
     }).join('') || '<p class="muted">Sesongen har ingen innsamlingsdatoer.</p>';
+
+    for (const box of root.querySelectorAll('.ed')) {
+      const m = msgs[recKey(box.dataset.date, box.dataset.slot)];
+      if (m && !recChanged(box.dataset.date, box.dataset.slot)) { const el = box.querySelector('.msg'); el.textContent = m[0]; el.className = m[1]; }
+    }
+    if (focus) {
+      const box = recBox(focus.key);
+      const el = box && (focus.act ? box.querySelector(`[data-act="${focus.act}"]`) : box.querySelector(`select[data-i="${focus.i}"]`) || box.querySelector('select'));
+      if (el) el.focus();
+    }
+  }
+
+  function editSlot(d, slot, mutate) {
+    const key = recKey(d, slot), list = recCurrent(d, slot), shown = list.length ? list.slice() : [''];
+    mutate(shown);
+    recDrafts[key] = shown.length === 1 && !shown[0] ? [] : shown;
+    if (!recChanged(d, slot) && !recDrafts[key].includes('')) delete recDrafts[key];
+    refreshReception({groups: musicianGroups(), holders: holders()});
+  }
+
+  async function saveSlot(d, slot, box) {
+    const names = clean(recCurrent(d, slot)), btn = box.querySelector('[data-act="save"]'), msg = box.querySelector('.msg');
+    btn.disabled = true; say(msg, 'Lagrer …', true);
+    try {
+      await api('PUT', `/api/seasons/${encodeURIComponent(seasonSel.value)}/reception/${encodeURIComponent(d)}/${encodeURIComponent(slot)}`, names);
+      doc.reception = doc.reception || {};
+      (doc.reception[d] = doc.reception[d] || {})[slot] = names;
+      delete recDrafts[recKey(d, slot)];
+      refreshRoder();
+      const fresh = recBox(recKey(d, slot));
+      if (fresh) say(fresh.querySelector('.msg'), 'Lagret', true);
+    } catch (e) { say(msg, e.message, false); btn.disabled = false; }
   }
 
   function applyFilter() {
@@ -469,31 +548,27 @@ td input{width:100%}
     }
   }
 
-  const markChanged = (box, field) => box.classList.toggle('changed', field.value !== field.dataset.orig);
-
-  async function save(box, field, path, names) {
-    const btn = box.querySelector('button'), msg = box.querySelector('.msg');
-    btn.disabled = true; say(msg, 'Lagrer …', true);
-    try {
-      await api('PUT', path, names);
-      field.dataset.orig = field.value; markChanged(box, field);
-      say(msg, 'Lagret', true);
-    } catch (e) { say(msg, e.message, false); }
-    finally { btn.disabled = false; }
-  }
-
   for (const box of [$('roder'), $('pick')]) {
     box.addEventListener('change', onEditorChange);
     box.addEventListener('click', onEditorClick);
   }
 
-  $('reception').addEventListener('input', e => { const box = e.target.closest('.slot'); if (box) markChanged(box, e.target); });
+  $('reception').addEventListener('change', e => {
+    const box = e.target.closest('.ed');
+    if (!box || e.target.tagName !== 'SELECT') return;
+    const i = +e.target.dataset.i, value = e.target.value;
+    editSlot(box.dataset.date, box.dataset.slot, list => { if (value) list[i] = value; else list.splice(i, 1); });
+  });
   $('reception').addEventListener('click', e => {
-    const box = e.target.closest('.slot');
-    if (!box || e.target.tagName !== 'BUTTON') return;
-    const area = box.querySelector('textarea'), names = splitNames(area.value, /\r?\n/);
-    area.value = names.join('\n');
-    save(box, area, `/api/seasons/${encodeURIComponent(seasonSel.value)}/reception/${encodeURIComponent(box.dataset.date)}/${encodeURIComponent(box.dataset.slot)}`, names);
+    const box = e.target.closest('.ed'), act = e.target.dataset && e.target.dataset.act;
+    if (!box || !act) return;
+    const d = box.dataset.date, slot = box.dataset.slot;
+    if (act === 'add') {
+      editSlot(d, slot, list => list.push(''));
+      const sels = recBox(recKey(d, slot)).querySelectorAll('select');
+      sels[sels.length - 1].focus();
+    }
+    else if (act === 'save') saveSlot(d, slot, box);
   });
 
   $('dates').addEventListener('input', e => { if (e.target.dataset.kind) e.target.closest('td').classList.toggle('changed', e.target.value !== e.target.dataset.orig); });
