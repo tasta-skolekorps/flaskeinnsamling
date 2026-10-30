@@ -218,7 +218,8 @@ td input{width:100%}
       doc = await api('GET', '/api/seasons/' + encodeURIComponent(s));
       $('editor').hidden = false;
       render();
-      say(status, 'Hentet ' + s + '.', true);
+      say(status, hasHousing() ? 'Hentet ' + s + '.'
+        : 'Hentet ' + s + ', men sesongen mangler postkassetall (housing). Importer sesongen med housing for å se antall.', hasHousing());
     } catch (e) {
       if (e.auth) return;
       doc = null;
@@ -289,6 +290,8 @@ td input{width:100%}
     const h = (doc.housing || {})[r];
     return Array.isArray(h) && Number.isFinite(h[1]) ? h[1] : '';
   };
+  const mailboxes = r => { const n = dwellingsOf(r); return n === '' ? '' : n + ' postkasser'; };
+  const hasHousing = () => Object.keys(doc.housing || {}).length > 0;
   const allRoder = () => [...new Set([...Object.keys(doc.housing || {}), ...Object.keys(doc.assignments || {}), ...Object.keys(drafts)])].sort();
 
   // name -> roder the name is on (drafts included, so moves show up before saving).
@@ -348,7 +351,7 @@ td input{width:100%}
       <td class="r"><a href="#map" data-act="show">${esc(r)}</a></td><td class="num">${esc(dwellingsOf(r))}</td>
       <td>${editorHtml(r, ctx)}</td></tr>`).join('');
     $('pick').innerHTML = selected
-      ? `<h3>Rode ${esc(selected)}</h3><p class="muted">${selected.startsWith('20') ? 'Sør' : 'Nord'} · ${esc(dwellingsOf(selected))} postkasser</p>${editorHtml(selected, ctx)}`
+      ? `<h3>Rode ${esc(selected)}</h3><p class="muted">${selected.startsWith('20') ? 'Sør' : 'Nord'}${mailboxes(selected) ? ' · ' + esc(mailboxes(selected)) : ''}</p>${editorHtml(selected, ctx)}`
       : '<h3>Velg en rode</h3><p class="muted">Klikk på en rode i kartet for å endre hvem som har den.</p>';
 
     for (const box of document.querySelectorAll('#roder .ed, #pick .ed')) {
@@ -392,7 +395,7 @@ td input{width:100%}
       bounds.push(...ring);
       L.tooltip({permanent: true, direction: 'center', className: 'lbl' + (has ? '' : ' free') + (isChanged(r) ? ' changed' : ''), opacity: 1})
         .setLatLng(poly.getBounds().getCenter())
-        .setContent('<b>' + esc(r) + '</b>' + (has ? names.map(esc).join('<br>') : 'Samles ikke inn') + '<small>' + esc(dwellingsOf(r)) + ' postkasser</small>')
+        .setContent('<b>' + esc(r) + '</b>' + (has ? names.map(esc).join('<br>') : 'Samles ikke inn') + (mailboxes(r) ? '<small>' + esc(mailboxes(r)) + '</small>' : ''))
         .addTo(rodeLayer);
     });
     if (selected && layers[selected]) layers[selected].bringToFront();
