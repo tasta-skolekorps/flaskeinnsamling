@@ -62,14 +62,18 @@ td input{width:100%}
 <p class="muted">API-et er fasit for rodefordeling og mottaksvakter. Endringer her vises på rodekartet og vaktlisten med en gang. Rodearket (PDF) må lages på nytt etterpå.</p>
 
 <h2>Tilgang</h2>
-<div class="row">
+<form class="row" id="keyForm" autocomplete="off" hidden>
  <label for="key">Admin-nøkkel</label>
- <input type="password" id="key" autocomplete="off" spellcheck="false" size="34" placeholder="Lim inn nøkkelen fra passordlageret">
+ <input type="password" id="key" autocomplete="new-password" spellcheck="false" size="34" placeholder="Lim inn nøkkelen fra passordlageret">
+ <button type="submit">Bruk nøkkel</button>
+</form>
+<div class="row" id="keyOk" hidden>
+ <span class="msg ok">Nøkkel er lagt inn.</span>
  <button type="button" id="forget" class="ghost">Glem nøkkel</button>
 </div>
-<p class="muted">Nøkkelen lagres bare i denne fanen (sessionStorage) og slettes når fanen lukkes.</p>
+<p class="muted">Nøkkelen lagres bare i denne fanen (sessionStorage) og slettes når fanen lukkes eller du trykker «Glem nøkkel».</p>
 
-<div class="row" style="margin-top:12px">
+<div class="row" id="seasonRow" style="margin-top:12px">
  <label for="season">Sesong</label>
  <select id="season"></select>
  <button type="button" id="reload" class="ghost">Last inn på nytt</button>
@@ -123,14 +127,39 @@ td input{width:100%}
   const keyInput = $('key'), seasonSel = $('season'), status = $('status');
   let doc = null;
 
-  keyInput.value = sessionStorage.getItem(KEY_STORE) || '';
-  keyInput.addEventListener('input', () => {
+  const getKey = () => sessionStorage.getItem(KEY_STORE) || '';
+  // Show either the key input or the "key stored" state with the forget button, never both.
+  function renderKeyState() {
+    const has = !!getKey();
+    $('keyForm').hidden = has;
+    $('keyOk').hidden = !has;
+    keyInput.value = '';
+  }
+  // Without a key the editor is hidden, so nothing from the season stays on screen.
+  function clearEditor() {
+    doc = null; drafts = {}; selected = null;
+    $('editor').hidden = true;
+    $('roder').innerHTML = ''; $('reception').innerHTML = ''; $('pick').innerHTML = ''; $('dates').innerHTML = '';
+    $('counts').textContent = ''; $('free').textContent = '';
+    if (rodeLayer) rodeLayer.clearLayers();
+  }
+  function forgetKey(message) {
+    sessionStorage.removeItem(KEY_STORE);
+    renderKeyState();
+    clearEditor();
+    say(status, message, false);
+    keyInput.focus();
+  }
+  $('keyForm').addEventListener('submit', e => {
+    e.preventDefault();
     const v = keyInput.value.trim();
-    v ? sessionStorage.setItem(KEY_STORE, v) : sessionStorage.removeItem(KEY_STORE);
+    if (!v) return;
+    sessionStorage.setItem(KEY_STORE, v);
+    renderKeyState();
+    if (seasonSel.value) loadSeason();
   });
-  // Reload so the admin-only mailbox counts appear once the key is pasted.
-  keyInput.addEventListener('change', () => { if (seasonSel.value) loadSeason(); });
-  $('forget').addEventListener('click', () => { sessionStorage.removeItem(KEY_STORE); keyInput.value = ''; });
+  $('forget').addEventListener('click', () => forgetKey('Nøkkelen er glemt. Lim inn nøkkelen for å se og endre sesongen.'));
+  renderKeyState();
 
   const say = (el, text, ok) => { el.textContent = text; el.className = 'msg ' + (ok ? 'ok' : 'err'); };
   const splitNames = (s, sep) => s.split(sep).map(n => n.trim()).filter(Boolean);
@@ -142,7 +171,7 @@ td input{width:100%}
   async function api(method, path, body) {
     if (!base) throw new Error('API-et er ikke satt opp (API_BASE i api.js).');
     const headers = {Accept: 'application/json'};
-    const key = keyInput.value.trim();
+    const key = getKey();
     // Mailbox counts (housing) are only returned to admins, so send the key on reads too.
     if (key) headers['X-Admin-Key'] = key;
     if (method !== 'GET') {
@@ -150,7 +179,10 @@ td input{width:100%}
       headers['Content-Type'] = 'application/json';
     }
     const res = await fetch(base + path, {method, headers, mode: 'cors', cache: 'no-store', body: body === undefined ? undefined : JSON.stringify(body)});
-    if (res.status === 401) throw new Error('Feil admin-nøkkel.');
+    if (res.status === 401) {
+      forgetKey('Feil admin-nøkkel. Lim inn riktig nøkkel.');
+      throw Object.assign(new Error('Feil admin-nøkkel. Lim inn riktig nøkkel.'), {auth: true});
+    }
     if (res.status === 404) throw new Error('Fant ikke sesongen.');
     if (!res.ok) {
       let detail = 'HTTP ' + res.status;
@@ -177,6 +209,10 @@ td input{width:100%}
 
   async function loadSeason() {
     const s = seasonSel.value;
+    if (!getKey()) {
+      clearEditor();
+      return say(status, 'Lim inn admin-nøkkelen for å se og endre sesongen.', false);
+    }
     say(status, 'Henter ' + s + ' …', true);
     try {
       doc = await api('GET', '/api/seasons/' + encodeURIComponent(s));
@@ -184,6 +220,7 @@ td input{width:100%}
       render();
       say(status, 'Hentet ' + s + '.', true);
     } catch (e) {
+      if (e.auth) return;
       doc = null;
       $('editor').hidden = false;
       $('roder').innerHTML = ''; $('reception').innerHTML = ''; $('pick').innerHTML = '';
@@ -231,7 +268,7 @@ td input{width:100%}
         const m = html.match(new RegExp('^const ' + name + '=(.*);\\s*$', 'm'));
         return m ? JSON.parse(m[1].replace(/'/g, '"')) : null;
       };
-      geo = {polys: literal('polys') || {}, shownFree: literal('shownFree') || [], dwellings: literal('dwellings') || {}};
+      geo = {polys: literal('polys') || {}, shownFree: literal('shownFree') || []};
       if (!Object.keys(geo.polys).length) throw new Error('fant ingen roder');
     })
     .catch(e => {
@@ -248,8 +285,7 @@ td input{width:100%}
   const isChanged = r => !!drafts[r] && JSON.stringify(clean(drafts[r])) !== JSON.stringify(clean(saved(r)));
   const dwellingsOf = r => {
     const h = (doc.housing || {})[r];
-    if (Array.isArray(h) && Number.isFinite(h[1])) return h[1];
-    return geo && geo.dwellings[r] != null ? geo.dwellings[r] : '';
+    return Array.isArray(h) && Number.isFinite(h[1]) ? h[1] : '';
   };
   const allRoder = () => [...new Set([...Object.keys(doc.housing || {}), ...Object.keys(doc.assignments || {}), ...Object.keys(drafts)])].sort();
 
