@@ -19,7 +19,7 @@
 | Tester | Tester | .squad/agents/tester/charter.md | 🧪 Tester |
 | Scribe | Session Logger | .squad/agents/scribe/charter.md | 📋 Scribe |
 | Ralph | Work Monitor | .squad/agents/ralph/charter.md | 🔄 Monitor |
-| Rai | RAI Reviewer | .squad/agents/Rai/charter.md | 🛡️ RAI |
+| Rai | RAI Reviewer | .squad/agents/rai/charter.md | 🛡️ RAI |
 | Fact Checker | Fact Checker | .squad/agents/fact-checker/charter.md | 🔍 Verifier |
 
 ## Project Context
