@@ -50,6 +50,30 @@ td input{width:100%}
 .changed input{border-color:var(--amber);background:#fff8ee}
 #json{width:100%;min-height:200px;font-family:ui-monospace,Consolas,monospace;font-size:12px}
 [hidden]{display:none!important}
+/* Reception check-off list: only rendered while printing it from the button. */
+#mottaksliste{display:none}
+@page{size:A4;margin:8mm}
+@media print{
+ body.print-list{padding:0;background:none}
+ body.print-list>*:not(#mottaksliste){display:none!important}
+ body.print-list #mottaksliste{display:block}
+}
+.ml{font:9pt/1.15 system-ui,Arial,sans-serif;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.ml-page{break-after:page}
+.ml-page:last-child{break-after:auto}
+.ml-head{display:flex;justify-content:space-between;align-items:flex-end;gap:6mm;height:11mm;box-sizing:border-box;padding-bottom:1mm;margin-bottom:2mm;border-bottom:.4mm solid #000}
+.ml-head .ml-title{font-size:13pt;font-weight:700}
+.ml-head .ml-meta{font-size:9pt;white-space:nowrap}
+.ml-cols{display:flex;gap:5mm;align-items:flex-start}
+.ml-cols>div{width:calc(50% - 2.5mm)}
+.ml table{width:100%;border-collapse:collapse;table-layout:fixed}
+.ml th,.ml td{height:5.5mm;padding:0 1.2mm;border:.2mm solid #555;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:middle;text-align:left;color:#000}
+.ml th{background:#ddd;font-weight:700}
+.ml tbody tr:nth-child(even) td{background:#f1f1f1}
+.ml tr{break-inside:avoid}
+.ml .c-rode{width:12mm}
+.ml .c-lev{width:13mm}
+.ml .c-sek{width:21mm}
 </style></head><body class="has-side">
 <nav class="side">
  <a class="brand" href="index.html"><svg width="24" height="48" viewBox="0 0 24 48" aria-hidden="true"><path d="M9 1h6v5l-1 1v7c0 2 6 5 6 11v19a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V25c0-6 6-9 6-11V7L9 6z" fill="#bfe8cf"/><rect x="6" y="27" width="12" height="10" rx="1.5" fill="#d08a2a"/></svg><span><b>Flaskeinnsamling</b><small>Tasta Skolekorps</small></span></a>
@@ -109,6 +133,15 @@ td input{width:100%}
 <p class="muted">Velg musikant(er) i nedtrekkslisten for hver vakt. Bruk «+ legg til» for flere, og velg «(ingen)» for å fjerne et navn. Trykk «Lagre» for hver vakt du har endret. Tom vakt = ingen på vakt. «– vakt 18:30–20:00» bak et navn betyr at musikanten allerede står på en annen vakt samme dag, og «– rode 2101» at musikanten har rode.</p>
 <div id="reception"></div>
 
+<h2>Mottaksliste (utskrift)</h2>
+<p class="muted">Liste over alle innsamlere og roden deres, til å krysse av når de leverer på Byfjord skole. «Ant. sekker» fylles ut for hånd. Listen bygges fra lagret rodefordeling.</p>
+<div class="row" id="printBox">
+ <label for="printDate">Innsamling</label>
+ <select id="printDate"></select>
+ <button type="button" id="printList">Skriv ut mottaksliste</button>
+ <span class="msg"></span>
+</div>
+
 <h2>Hele sesongen (JSON)</h2>
 <p class="muted">Last ned som sikkerhetskopi, eller importer en hel sesong (f.eks. ny sesong). Import <b>erstatter alt</b> i sesongen som står i feltet <code>season</code>.</p>
 <div class="row">
@@ -119,6 +152,7 @@ td input{width:100%}
 <div class="row"><button type="button" id="import">Importer</button><span id="importMsg" class="msg"></span></div>
 </section>
 </main>
+<section id="mottaksliste" class="ml" aria-hidden="true"></section>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="api.js"></script>
 <script>
@@ -144,6 +178,7 @@ td input{width:100%}
     $('editor').hidden = true;
     $('roder').innerHTML = ''; $('reception').innerHTML = ''; $('pick').innerHTML = ''; $('dates').innerHTML = '';
     $('counts').textContent = ''; $('free').textContent = '';
+    $('mottaksliste').innerHTML = ''; $('printDate').innerHTML = '';
     if (rodeLayer) rodeLayer.clearLayers();
   }
   function forgetKey(message) {
@@ -264,6 +299,9 @@ td input{width:100%}
         <td>${dateInput('notices', d, notices[d] || defaultNotice(d, handout), 'Lapper ut for ' + d)}</td></tr>`;
     }).join('') || '<tr><td colspan="3" class="muted">Sesongen har ingen innsamlingsdatoer.</td></tr>';
     $('dates').querySelectorAll('input[data-kind]').forEach(i => { i.dataset.prev = i.value; updateDateCell(i); });
+    const keep = $('printDate').value;
+    $('printDate').innerHTML = '<option value="">(fyll inn for hånd)</option>'
+      + (doc.collections || []).map(d => `<option value="${esc(d)}"${d === keep ? ' selected' : ''}>${esc(fmtDate(d))}</option>`).join('');
   }
 
   function renderRoder() {
@@ -634,6 +672,47 @@ td input{width:100%}
     $('filter').value = '';
     if (geo && !geo.polys[r]) say($('status'), 'Rode ' + r + ' finnes ikke i kartet, men kan fordeles i listen.', false);
     select(r, true);
+  });
+
+  // --- Printable reception check-off list ---
+  const ML_ROWS_PER_COL = 45; // A4 minus 8mm margins, 11mm header and thead, 5.5mm rows (+borders).
+  function receptionRows() {
+    const byPerson = {};
+    for (const [r, names] of Object.entries(doc.assignments || {}))
+      for (const n of clean(names || [])) (byPerson[n] = byPerson[n] || []).push(r);
+    return Object.entries(byPerson).map(([name, roder]) => ({name, rode: roder.sort().join(', ')}))
+      .sort((a, b) => byName(a.name, b.name) || a.rode.localeCompare(b.rode));
+  }
+  function buildReceptionList(rows, date) {
+    const pages = [];
+    for (let i = 0; i < rows.length; i += 2 * ML_ROWS_PER_COL) {
+      const chunk = rows.slice(i, i + 2 * ML_ROWS_PER_COL), half = Math.ceil(chunk.length / 2);
+      pages.push([chunk.slice(0, half), chunk.slice(half)]);
+    }
+    const table = list => `<div><table><colgroup><col><col class="c-rode"><col class="c-lev"><col class="c-sek"></colgroup>
+      <thead><tr><th>Musikant</th><th>Rode</th><th>Levert</th><th>Ant. sekker</th></tr></thead><tbody>`
+      + list.map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.rode)}</td><td></td><td></td></tr>`).join('') + '</tbody></table></div>';
+    const dateText = date ? esc(fmtDate(date)) : '_______________________';
+    $('mottaksliste').innerHTML = pages.map(([left, right], p) => `<div class="ml-page">
+      <div class="ml-head"><span class="ml-title">Mottaksliste – flaskeinnsamling ${esc(seasonSel.value)}</span>
+      <span class="ml-meta">Dato: ${dateText} · ${rows.length} innsamlere${pages.length > 1 ? ` · side ${p + 1} av ${pages.length}` : ''}</span></div>
+      <div class="ml-cols">${table(left)}${right.length ? table(right) : '<div></div>'}</div></div>`).join('');
+    return pages.length;
+  }
+  $('printList').addEventListener('click', () => {
+    const msg = $('printBox').querySelector('.msg');
+    if (!getKey() || !doc) return say(msg, 'Lim inn admin-nøkkelen og hent sesongen først.', false);
+    const rows = receptionRows();
+    if (!rows.length) return say(msg, 'Ingen musikanter har rode ennå.', false);
+    buildReceptionList(rows, $('printDate').value);
+    say(msg, Object.keys(drafts).some(isChanged) ? 'Ulagrede endringer i rodefordelingen er ikke med på listen.' : '', false);
+    document.body.classList.add('print-list');
+    window.print();
+  });
+  window.addEventListener('afterprint', () => {
+    if (!document.body.classList.contains('print-list')) return;
+    document.body.classList.remove('print-list');
+    $('mottaksliste').innerHTML = '';
   });
 
   seasonSel.addEventListener('change', loadSeason);
