@@ -1,12 +1,23 @@
 {
-  "universe_usage_history": [
-    { "universe": "descriptive", "assignment_id": "flaskeinnsamling-2026-10-17", "used_at": "2026-10-17T12:33:23+02:00" }
-  ],
   "assignment_cast_snapshots": {
     "flaskeinnsamling-2026-10-17": {
+      "agents": [
+        "lead",
+        "backend",
+        "frontend",
+        "infra",
+        "tester"
+      ],
       "universe": "descriptive",
-      "created_at": "2026-10-17T12:33:23+02:00",
-      "agents": ["Lead", "Backend", "Frontend", "Infra", "Tester"]
+      "created_at": "2026-10-17T12:33:23+02:00"
     }
-  }
+  },
+  "universe_usage_history": [
+    {
+      "universe": "descriptive",
+      "used_at": "2026-10-17T12:33:23+02:00"
+    }
+  ],
+  "transaction_id": "de25c298-693a-4821-a2d4-909ed7040449",
+  "registry_revision": 1
 }
