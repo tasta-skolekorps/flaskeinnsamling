@@ -114,7 +114,7 @@ td input{width:100%}
 <div class="row" style="margin-top:8px" id="datesBox"><button type="button" id="saveDates">Lagre datoer</button><span class="msg"></span></div>
 
 <h2>Rodefordeling</h2>
-<p class="muted">Klikk på en rode i kartet (eller bruk listen under) og velg musikant(er) i nedtrekkslisten. Søsken kan dele rode: bruk «+ legg til». Velg «(ingen)» for å fjerne et navn. Trykk «Lagre» for hver rode du har endret. Farget = samles inn, grå stiplet = samles ikke inn, oransje kant = ikke lagret. «– rode 2003» bak et navn betyr at musikanten allerede har en annen rode.</p>
+<p class="muted">Klikk på en rode i kartet (eller bruk listen under) og velg musikant(er) i nedtrekkslisten. Søsken kan dele rode: bruk «+ legg til». Velg «(ingen)» for å fjerne et navn. Trykk «Lagre» for hver rode du har endret. Farget = samles inn, grå stiplet = samles ikke inn (svake roder utenfor området kan også klikkes og tildeles), oransje kant = ikke lagret. «– rode 2003» bak et navn betyr at musikanten allerede har en annen rode.</p>
 <div class="mapwrap" id="mapwrap">
  <div id="map" role="region" aria-label="Kart over rodene"></div>
  <aside id="pick" aria-live="polite"></aside>
@@ -441,8 +441,14 @@ td input{width:100%}
     rodeLayer.clearLayers(); layers = {};
     const keys = Object.keys(geo.polys), bounds = [];
     keys.forEach((r, idx) => {
-      if (!clean(current(r)).length && !geo.shownFree.includes(r) && r !== selected && !isChanged(r)) return;
       const ring = geo.polys[r], names = clean(current(r)), has = names.length > 0;
+      // Roder outside the shown band are drawn faintly, but stay clickable so they can be assigned.
+      if (!has && !geo.shownFree.includes(r) && r !== selected && !isChanged(r)) {
+        layers[r] = L.polygon(ring, {color: '#999', weight: 1, fillColor: '#999', fillOpacity: 0.08, dashArray: '3 4'})
+          .bindTooltip('<b>' + esc(r) + '</b> Samles ikke inn', {sticky: true})
+          .on('click', () => select(r, false)).addTo(rodeLayer);
+        return;
+      }
       const color = has ? COLORS[idx % COLORS.length] : '#777';
       const poly = L.polygon(ring, {color, weight: r === selected ? 5 : has ? 2 : 1.5, fillColor: color, fillOpacity: has ? 0.28 : 0.3, dashArray: has ? null : '5 4'})
         .on('click', () => select(r, false)).addTo(rodeLayer);
