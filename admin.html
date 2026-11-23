@@ -421,7 +421,9 @@ td input{width:100%}
     }
 
     const people = new Set(Object.keys(ctx.holders)), collected = allRoder().filter(r => clean(current(r)).length);
-    $('counts').textContent = `${people.size} musikanter · ${collected.length} roder` + (Object.keys(drafts).some(isChanged) ? ' · ulagrede endringer' : '');
+    const boxes = collected.reduce((sum, r) => sum + (Number(dwellingsOf(r)) || 0), 0);
+    $('counts').textContent = `${people.size} musikanter · ${collected.length} roder`
+      + (hasHousing() ? ` · ${boxes} postkasser totalt` : '') + (Object.keys(drafts).some(isChanged) ? ' · ulagrede endringer' : '');
     const without = ctx.groups.flatMap(([, names]) => names).filter(n => !ctx.holders[n]);
     $('free').innerHTML = without.length
       ? `<b>Uten rode (${without.length}):</b> ` + without.map(n => esc(n) + (ctx.reception.has(n) ? ' (mottak)' : '')).join(', ')
